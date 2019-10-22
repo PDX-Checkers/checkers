@@ -23,6 +23,19 @@ enum Piece {
     BLACK_KING
 };
 
+function promotePiece(piece: Piece): Piece {
+    switch(piece) {
+        case Piece.RED_MAN: {
+            return Piece.RED_KING;
+        }
+        case Piece.BLACK_MAN: {
+            return Piece.BLACK_KING;
+        }
+        default:
+            return piece;
+    }
+}
+
 abstract class GameState {
     color: Color;
 
@@ -302,13 +315,8 @@ class Board {
             }
             // Now we check for promotion. If the targetIndex's row and color
             // line up, we replace the piece with a king.
-            if(newBoard.pieces[targetIndex] == Piece.BLACK_MAN &&
-               bottomRow(targetIndex)) {
-                newBoard.pieces[targetIndex] = Piece.BLACK_KING;
-            }
-            else if(newBoard.pieces[targetIndex] == Piece.RED_MAN &&
-               topRow(targetIndex)) {
-                newBoard.pieces[targetIndex] = Piece.RED_KING;
+            if(promotableLocation(this.currentState.color, targetIndex)) {
+                newBoard.promote(targetIndex);
             }
             // And now we give the turn over to the other player.
             newBoard.currentState = new RegularTurn(otherColor(this.currentState.color));
@@ -346,18 +354,17 @@ class Board {
                 return newBoard;
             }
             // Otherwise, we check for promotion.
-            if(newBoard.pieces[targetIndex] == Piece.BLACK_MAN &&
-               bottomRow(targetIndex)) {
-                newBoard.pieces[targetIndex] = Piece.BLACK_KING;
-            }
-            else if(newBoard.pieces[targetIndex] == Piece.RED_MAN &&
-               topRow(targetIndex)) {
-                newBoard.pieces[targetIndex] = Piece.RED_KING;
+            if(promotableLocation(this.currentState.color, targetIndex)) {
+                newBoard.promote(targetIndex);
             }
             // And now we give the turn over to the other player.
             newBoard.currentState = new RegularTurn(otherColor(this.currentState.color));
             return newBoard;
         }
+    }
+
+    promote(targetIndex: number) {
+        this.pieces[targetIndex] = promotePiece(this.pieces[targetIndex]);
     }
 }
 
@@ -506,5 +513,18 @@ function potentialMoveFunctions(piece: Piece): ((arg: number) => number)[] {
         case Piece.BLACK_KING: {
             return ALL_MOVES;
         }
+    }
+}
+
+function promotableLocation(color: Color, index: number): boolean {
+    switch(color) {
+        case Color.RED: {
+            return topRow(index);
+        }
+        case Color.BLACK: {
+            return bottomRow(index);
+        }
+        default:
+            return false;
     }
 }
