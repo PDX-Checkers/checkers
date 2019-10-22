@@ -286,6 +286,10 @@ class Board {
             if(this.potentialMoves(sourceIndex).indexOf(targetIndex) < 0) {
                 return undefined;
             }
+            // If the player's target already has a piece on it, return undefined.
+            if(this.pieces[targetIndex] != Piece.NONE) {
+                return undefined;
+            }
             // If the player must capture, but isn't capturing, return
             // undefined.
             let captureMoves: [number, number][] = this.captureIndices(sourceIndex);
