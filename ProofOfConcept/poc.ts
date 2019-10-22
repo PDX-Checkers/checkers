@@ -12,11 +12,77 @@ enum Piece {
     BLACK_KING
 };
 
-enum Outcome {
-    NOT_DONE,
+/*
+enum GameState {
+    RED_TURN,
+    RED_MULTICAPTURE,
+    BLACK_TURN,
+    BLACK_MULTICAPTURE,
     RED_WIN,
     BLACK_WIN,
     DRAW
+}
+*/
+
+abstract class GameState {
+    color: Color;
+
+    constructor(color: Color) {
+        this.color = color;
+    }
+    isRegularTurn(): boolean {
+        return false;
+    }
+    isMulticapture(): boolean {
+        return false;
+    }
+    isCompleteGame(): boolean {
+        return false;
+    }
+    multicaptureIndex(): number {
+        return undefined;
+    }
+}
+
+class RegularTurn extends GameState {
+    color: Color;
+
+    constructor(color: Color) {
+        super(color);
+    }
+
+    isRegularTurn(): boolean {
+        return true;
+    }
+}
+
+class Multicapture extends GameState {
+    color: Color;
+    currentIndex: number;
+
+    constructor(color: Color, currentIndex: number) {
+        super(color);
+        this.currentIndex = currentIndex;
+    }
+
+    isMulticapture(): boolean {
+        return true;
+    }
+    multicaptureIndex(): number {
+        return this.currentIndex;
+    }
+}
+
+class CompleteGame extends GameState {
+    color: Color;
+    
+    constructor(color: Color) {
+        super(color);
+    }
+
+    isCompleteGame(): boolean {
+        return true;
+    }
 }
 
 function any<T>(f:(arg: T) => boolean, arr: T[]): boolean {
@@ -92,8 +158,12 @@ function defaultBoard(): Piece[] {
 }
 
 class Board {
-    pieces: Piece[]
-    constructor(pieces: Piece[] = undefined, deepcopy: boolean = false) {
+    pieces: Piece[];
+    currentState: GameState;
+
+    constructor(pieces: Piece[] = undefined, 
+                currentState: GameState = new RegularTurn(Color.BLACK), 
+                deepcopy: boolean = false) {
         if(pieces === undefined) {
             this.pieces = defaultBoard();
         }
@@ -105,12 +175,13 @@ class Board {
                 this.pieces = pieces;
             }
         }
+        this.currentState = currentState;
     }
 
     // There's an opportunity for optimization here: keep a count of pieces, and
     // decrement whenever there is a capture. In the meantime, we just iterate
     // through all 32 spots on the board.
-    isGameOver(): Outcome {
+    isGameOver(): boolean {
         let [numRed, numBlack] = [0, 0];
         for(let i = 0; i < this.pieces.length; i++) {
             if(pieceColor(this.pieces[i]) == Color.RED) {
@@ -120,13 +191,10 @@ class Board {
                 numBlack++;
             }
             if(numRed > 0 && numBlack > 0) {
-                return Outcome.NOT_DONE;
+                return false;
             }
         }
-        if(numRed > 0) {
-            return Outcome.RED_WIN;
-        }
-        return Outcome.BLACK_WIN;
+        return true;
     }
 
     // Obtain all potential moves by obtaining all move functions of the piece,
@@ -176,11 +244,131 @@ class Board {
     // there is anything in the list.
     // Again, there might be room for optimization - we could do this
     // iteratively and exit immediately upon finding a piece that can capture.
-    mustCapture(color: Color): boolean {
+    mustCapture(): boolean {
         return flatten(
                 enumerate(this.pieces)
-                    .filter(([_, p]) => pieceColor(p) == color)
+                    .filter(([_, p]) => pieceColor(p) === this.currentState.color, this)
                     .map(([i, _]) => this.findAllCaptures(i), this)).length !== 0;
+    }
+
+    // More inefficient garbage.
+    move(sourceIndex: number, targetIndex: number): Board {
+        // We have two choices - it's either a regular turn, or it's a multicapture.
+        // Otherwise, the game is over.
+        if(this.currentState.isRegularTurn()) {
+            let moveMade: boolean = false;
+            // If the player is moving a piece that is the wrong color, return
+            // undefined.
+            if(this.currentState.color !== pieceColor(this.pieces[sourceIndex])) {
+                return undefined;
+            }
+            // If the player's target isn't valid, return undefined.
+            if(this.potentialMoves(sourceIndex).indexOf(targetIndex) < 0) {
+                return undefined;
+            }
+            // If the player must capture, but isn't capturing, return
+            // undefined.
+            let captureMoves: [number, number][] = this.captureIndices(sourceIndex);
+            if(this.mustCapture() &&
+               captureMoves.map(([x, y]) => y).indexOf(targetIndex) < 0) {
+                return undefined;
+            }
+            // Otherwise, it's a good move.
+            let newBoard: Board = new Board(this.pieces, this.currentState, true);
+            for(let i = 0; i < captureMoves.length; i++) {
+                let [jumpOverIndex, currentTarget] = captureMoves[i];
+                if (currentTarget === targetIndex) {
+                    // It's a capture, and we're going to move the piece and
+                    // remove the jumpOverIndex.
+                    newBoard.pieces[sourceIndex] = Piece.NONE;
+                    newBoard.pieces[jumpOverIndex] = Piece.NONE;
+                    newBoard.pieces[targetIndex] = this.pieces[sourceIndex];
+                    moveMade = true;
+                    // If the current piece can jump again, we return a Multicapture.
+                    if(newBoard.findAllCaptures(targetIndex).length != 0) { 
+                        newBoard.currentState = new Multicapture(this.currentState.color, targetIndex);
+                        return newBoard;
+                    }
+                    // And since there was a capture, we check to see if it's game over.
+                    if(newBoard.isGameOver()) {
+                        newBoard.currentState = new CompleteGame(this.currentState.color)
+                        return newBoard;
+                    }
+                }
+            }
+            if(!moveMade) {
+                // Otherwise, it's just a regular move.
+                newBoard.pieces[sourceIndex] = Piece.NONE;
+                newBoard.pieces[targetIndex] = this.pieces[sourceIndex];
+            }
+            // Now we check for promotion. If the targetIndex's row and color
+            // line up, we replace the piece with a king.
+            if(newBoard.pieces[targetIndex] == Piece.BLACK_MAN &&
+               bottomRow(targetIndex)) {
+                newBoard.pieces[targetIndex] = Piece.BLACK_KING;
+            }
+            else if(newBoard.pieces[targetIndex] == Piece.RED_MAN &&
+               topRow(targetIndex)) {
+                newBoard.pieces[targetIndex] = Piece.RED_KING;
+            }
+            // And now we give the turn over to the other player.
+            if(this.currentState.color === Color.RED) {
+                newBoard.currentState = new RegularTurn(Color.BLACK);
+            }
+            else {
+                newBoard.currentState = new RegularTurn(Color.RED);
+            }
+            return newBoard;
+        }
+        if(this.currentState.isMulticapture()) {
+            // If it's a multicapture, then our options are much more constrained.
+            // The sourceIndex must be equal to what's in the multicapture, and
+            // the targetIndex must be in the captureIndices.
+            if(sourceIndex !== this.currentState.multicaptureIndex()) {
+                return undefined;
+            }
+            let captureIndex: number = this.captureIndices(sourceIndex)
+                                           .map(([x, y]) => y)
+                                           .indexOf(targetIndex);
+
+            if(captureIndex < 0) {
+                return undefined;
+            }
+
+            // Otherwise, it's a good move.
+            let newBoard = new Board(this.pieces, this.currentState, true);
+            let [jumpOverIndex, _] = this.captureIndices(sourceIndex)[captureIndex];
+            newBoard.pieces[sourceIndex] = Piece.NONE;
+            newBoard.pieces[jumpOverIndex] = Piece.NONE;
+            newBoard.pieces[targetIndex] = this.pieces[sourceIndex];
+            // If the current piece can jump again, we return a Multicapture.
+            if(newBoard.findAllCaptures(targetIndex).length != 0) {
+                newBoard.currentState = new Multicapture(this.currentState.color, targetIndex);
+                return newBoard;
+            }
+            // And since there was a capture, we check to see if it's game over.
+            if(newBoard.isGameOver()) {
+                newBoard.currentState = new CompleteGame(this.currentState.color)
+                return newBoard;
+            }
+            // Otherwise, we check for promotion.
+            if(newBoard.pieces[targetIndex] == Piece.BLACK_MAN &&
+               bottomRow(targetIndex)) {
+                newBoard.pieces[targetIndex] = Piece.BLACK_KING;
+            }
+            else if(newBoard.pieces[targetIndex] == Piece.RED_MAN &&
+               topRow(targetIndex)) {
+                newBoard.pieces[targetIndex] = Piece.RED_KING;
+            }
+            // And now we give the turn over to the other player.
+            if(this.currentState.color === Color.RED) {
+                newBoard.currentState = new RegularTurn(Color.BLACK);
+            }
+            else {
+                newBoard.currentState = new RegularTurn(Color.RED);
+            }
+            return newBoard;
+        }
     }
 }
 
