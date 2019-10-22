@@ -76,6 +76,10 @@ function enumerate<T>(lst: T[]): [number, T][] {
     return zip(range(0, lst.length+1), lst);
 }
 
+function flatten<T>(lstlst: T[][]): T[] {
+    return lstlst.reduce((accumulator, lst) => accumulator.concat(...lst), [])
+}
+
 function defaultBoard(): Piece[] {
     return repeatN(Piece.BLACK_MAN, 12)
                 .concat(repeatN(Piece.NONE, 8))
@@ -146,15 +150,12 @@ class Board {
                    .map(([_, target]) => target);
     }
 
-    /*
-    mustCapture(color: Color) {
-        return any(
-            enumerate(this.pieces)
-                .filter(([_, p]) => pieceColor(p) == color)
-                .map(([i, _]) => i)
-        )
+    mustCapture(color: Color): boolean {
+        return flatten(
+                enumerate(this.pieces)
+                    .filter(([_, p]) => pieceColor(p) == color)
+                    .map(([i, _]) => this.findAllCaptures(i), this)).length !== 0;
     }
-    */
 }
 
 function row(index: number): number {
