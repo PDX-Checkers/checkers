@@ -4,6 +4,17 @@ enum Color {
     BLACK,
 };
 
+function otherColor(color: Color): Color {
+    switch(color) {
+        case Color.RED:
+            return Color.BLACK;
+        case Color.BLACK:
+            return Color.RED;
+        default:
+            return Color.NO_COLOR;
+    }
+}
+
 enum Piece {
     NONE,
     RED_MAN,
@@ -11,18 +22,6 @@ enum Piece {
     BLACK_MAN,
     BLACK_KING
 };
-
-/*
-enum GameState {
-    RED_TURN,
-    RED_MULTICAPTURE,
-    BLACK_TURN,
-    BLACK_MULTICAPTURE,
-    RED_WIN,
-    BLACK_WIN,
-    DRAW
-}
-*/
 
 abstract class GameState {
     color: Color;
@@ -312,12 +311,7 @@ class Board {
                 newBoard.pieces[targetIndex] = Piece.RED_KING;
             }
             // And now we give the turn over to the other player.
-            if(this.currentState.color === Color.RED) {
-                newBoard.currentState = new RegularTurn(Color.BLACK);
-            }
-            else {
-                newBoard.currentState = new RegularTurn(Color.RED);
-            }
+            newBoard.currentState = new RegularTurn(otherColor(this.currentState.color));
             return newBoard;
         }
         if(this.currentState.isMulticapture()) {
@@ -361,12 +355,7 @@ class Board {
                 newBoard.pieces[targetIndex] = Piece.RED_KING;
             }
             // And now we give the turn over to the other player.
-            if(this.currentState.color === Color.RED) {
-                newBoard.currentState = new RegularTurn(Color.BLACK);
-            }
-            else {
-                newBoard.currentState = new RegularTurn(Color.RED);
-            }
+            newBoard.currentState = new RegularTurn(otherColor(this.currentState.color));
             return newBoard;
         }
     }
