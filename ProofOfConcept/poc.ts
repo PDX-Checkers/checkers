@@ -56,6 +56,7 @@ function pieceColor(piece: Piece): Color {
     return Color.NO_COLOR;
 }
 
+// Produce an array of N duplicates of val.
 function repeatN<T>(val: T, n: number):T[] {
     let arr:T[] = [];
     for(let i = 0; i < n; i++) {
@@ -72,14 +73,18 @@ function range(start: number, end: number): number[] {
     return result;
 }
 
+// Equivalent to the Python function - zip a list with numbers, starting from 0.
 function enumerate<T>(lst: T[]): [number, T][] {
     return zip(range(0, lst.length+1), lst);
 }
 
+// Concatenate a bunch of lists into a single list.
 function flatten<T>(lstlst: T[][]): T[] {
     return lstlst.reduce((accumulator, lst) => accumulator.concat(...lst), [])
 }
 
+// Default starting board - black pieces in the top three rows, blank squares in
+// the next two rows, and red pieces in the bottom three rows.
 function defaultBoard(): Piece[] {
     return repeatN(Piece.BLACK_MAN, 12)
                 .concat(repeatN(Piece.NONE, 8))
@@ -102,6 +107,9 @@ class Board {
         }
     }
 
+    // There's an opportunity for optimization here: keep a count of pieces, and
+    // decrement whenever there is a capture. In the meantime, we just iterate
+    // through all 32 spots on the board.
     isGameOver(): Outcome {
         let [numRed, numBlack] = [0, 0];
         for(let i = 0; i < this.pieces.length; i++) {
@@ -121,6 +129,9 @@ class Board {
         return Outcome.BLACK_WIN;
     }
 
+    // Obtain all potential moves by obtaining all move functions of the piece,
+    // applying all of them, and returning the moves that aren't undefined.
+    // Note that you can't just go by falsy values, because 0 is a valid index...
     potentialMoves(index: number): number[] {
         let piece: Piece = this.pieces[index];
         return potentialMoveFunctions(piece)
@@ -137,6 +148,12 @@ class Board {
             .filter(([x, y]) => x !== undefined && y !== undefined)
     }
 
+    // We care about the following:
+    // * Is the index a piece?
+    // * Is it jumping over a piece?
+    // * Is it landing on an empty square?
+    // * Is the piece at the index a different color from the one it's jumping
+    // over?
     canCapture(index, jumpOverIndex, targetIndex): boolean {
         return this.pieces[index] !== Piece.NONE &&
             this.pieces[jumpOverIndex] !== Piece.NONE &&
@@ -144,12 +161,21 @@ class Board {
             pieceColor(this.pieces[index]) !== pieceColor(this.pieces[jumpOverIndex]);
     }
 
+    // Get all of the possible ways a piece can capture, and filter out the ones
+    // where canCapture fails.
     findAllCaptures(index: number): number[] {
         return this.captureIndices(index)
                    .filter(([jI, tI]) => this.canCapture(index, jI, tI), this)
                    .map(([_, target]) => target);
     }
 
+    // Iterate through all of the squares on the board to see if there is a
+    // capture.
+    // We filter out the indices that don't have a piece with the provided
+    // color, find all of the captures, concatenate them together, and see if
+    // there is anything in the list.
+    // Again, there might be room for optimization - we could do this
+    // iteratively and exit immediately upon finding a piece that can capture.
     mustCapture(color: Color): boolean {
         return flatten(
                 enumerate(this.pieces)
