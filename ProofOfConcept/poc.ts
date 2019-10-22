@@ -292,9 +292,7 @@ class Board {
                 if (currentTarget === targetIndex) {
                     // It's a capture, and we're going to move the piece and
                     // remove the jumpOverIndex.
-                    newBoard.pieces[sourceIndex] = Piece.NONE;
-                    newBoard.pieces[jumpOverIndex] = Piece.NONE;
-                    newBoard.pieces[targetIndex] = this.pieces[sourceIndex];
+                    newBoard.jump(sourceIndex, jumpOverIndex, targetIndex);
                     moveMade = true;
                     // If the current piece can jump again, we return a Multicapture.
                     if(newBoard.findAllCaptures(targetIndex).length != 0) { 
@@ -340,9 +338,7 @@ class Board {
             // Otherwise, it's a good move.
             let newBoard = new Board(this.pieces, this.currentState, true);
             let [jumpOverIndex, _] = this.captureIndices(sourceIndex)[captureIndex];
-            newBoard.pieces[sourceIndex] = Piece.NONE;
-            newBoard.pieces[jumpOverIndex] = Piece.NONE;
-            newBoard.pieces[targetIndex] = this.pieces[sourceIndex];
+            newBoard.jump(sourceIndex, jumpOverIndex, targetIndex);
             // If the current piece can jump again, we return a Multicapture.
             if(newBoard.findAllCaptures(targetIndex).length != 0) {
                 newBoard.currentState = new Multicapture(this.currentState.color, targetIndex);
@@ -362,6 +358,12 @@ class Board {
             return newBoard;
         }
     }
+
+    jump(sourceIndex: number, jumpOverIndex: number, targetIndex: number) {
+        this.pieces[targetIndex] = this.pieces[sourceIndex];
+        this.pieces[sourceIndex] = Piece.NONE;
+        this.pieces[jumpOverIndex] = Piece.NONE;
+    } 
 
     promote(targetIndex: number) {
         this.pieces[targetIndex] = promotePiece(this.pieces[targetIndex]);
