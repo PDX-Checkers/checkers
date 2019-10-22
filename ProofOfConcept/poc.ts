@@ -134,6 +134,14 @@ function pieceColor(piece: Piece): Color {
     return Color.NO_COLOR;
 }
 
+function fst<T1, T2>([fstElem, _]: [T1, T2]): T1 {
+    return fstElem;
+}
+
+function snd<T1, T2>([_, secondElem]: [T1, T2]): T2 {
+    return secondElem;
+}
+
 // Produce an array of N duplicates of val.
 function repeatN<T>(val: T, n: number):T[] {
     let arr:T[] = [];
@@ -282,7 +290,8 @@ class Board {
             // undefined.
             let captureMoves: [number, number][] = this.captureIndices(sourceIndex);
             if(this.mustCapture() &&
-               captureMoves.map(([x, y]) => y).indexOf(targetIndex) < 0) {
+               captureMoves.map(snd)
+                           .indexOf(targetIndex) < 0) {
                 return undefined;
             }
             // Otherwise, it's a good move.
@@ -328,7 +337,7 @@ class Board {
                 return undefined;
             }
             let captureIndex: number = this.captureIndices(sourceIndex)
-                                           .map(([x, y]) => y)
+                                           .map(snd)
                                            .indexOf(targetIndex);
 
             if(captureIndex < 0) {
