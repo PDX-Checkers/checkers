@@ -170,8 +170,8 @@ function defaultBoard(): Piece[] {
 }
 
 class Board {
-    pieces: Piece[];
-    currentState: GameState;
+    private pieces: Piece[];
+    private currentState: GameState;
 
     constructor(pieces: Piece[] = undefined, 
                 currentState: GameState = new RegularTurn(Color.BLACK), 
@@ -193,7 +193,7 @@ class Board {
     // There's an opportunity for optimization here: keep a count of pieces, and
     // decrement whenever there is a capture. In the meantime, we just iterate
     // through all 32 spots on the board.
-    isGameOver(): boolean {
+    private isGameOver(): boolean {
         let [numRed, numBlack] = [0, 0];
         for(let i = 0; i < this.pieces.length; i++) {
             if(pieceColor(this.pieces[i]) == Color.RED) {
@@ -212,7 +212,7 @@ class Board {
     // Obtain all potential moves by obtaining all move functions of the piece,
     // applying all of them, and returning the moves that aren't undefined.
     // Note that you can't just go by falsy values, because 0 is a valid index...
-    potentialMoves(index: number): number[] {
+    private potentialMoves(index: number): number[] {
         let piece: Piece = this.pieces[index];
         return potentialMoveFunctions(piece)
             .map(f => f(index))
@@ -222,7 +222,7 @@ class Board {
     // Given an index, return a list containing tuples.
     // The first element of each tuple is the index the piece must jump over to
     // reach the second element, which is the index the piece will land.
-    captureIndices(index: number): [number, number][] {
+    private captureIndices(index: number): [number, number][] {
         let piece: Piece = this.pieces[index];
         return zip(...divvy(potentialMoveFunctions(piece).map(f => f(index))))
             .filter(([x, y]) => x !== undefined && y !== undefined)
@@ -234,7 +234,7 @@ class Board {
     // * Is it landing on an empty square?
     // * Is the piece at the index a different color from the one it's jumping
     // over?
-    canCapture(index, jumpOverIndex, targetIndex): boolean {
+    private canCapture(index, jumpOverIndex, targetIndex): boolean {
         return this.pieces[index] !== Piece.NONE &&
             this.pieces[jumpOverIndex] !== Piece.NONE &&
             this.pieces[targetIndex] === Piece.NONE &&
@@ -243,7 +243,7 @@ class Board {
 
     // Get all of the possible ways a piece can capture, and filter out the ones
     // where canCapture fails.
-    findAllCaptures(index: number): number[] {
+    private findAllCaptures(index: number): number[] {
         return this.captureIndices(index)
                    .filter(([jI, tI]) => this.canCapture(index, jI, tI), this)
                    .map(([_, target]) => target);
@@ -256,7 +256,7 @@ class Board {
     // there is anything in the list.
     // Again, there might be room for optimization - we could do this
     // iteratively and exit immediately upon finding a piece that can capture.
-    mustCapture(): boolean {
+    private mustCapture(): boolean {
         return flatten(
                 enumerate(this.pieces)
                     .filter(([_, p]) => pieceColor(p) === this.currentState.color, this)
@@ -359,13 +359,13 @@ class Board {
         }
     }
 
-    jump(sourceIndex: number, jumpOverIndex: number, targetIndex: number) {
+    private jump(sourceIndex: number, jumpOverIndex: number, targetIndex: number) {
         this.pieces[targetIndex] = this.pieces[sourceIndex];
         this.pieces[sourceIndex] = Piece.NONE;
         this.pieces[jumpOverIndex] = Piece.NONE;
     } 
 
-    promote(targetIndex: number) {
+    private promote(targetIndex: number) {
         this.pieces[targetIndex] = promotePiece(this.pieces[targetIndex]);
     }
 }
