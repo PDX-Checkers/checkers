@@ -4,6 +4,17 @@ enum Color {
     BLACK,
 };
 
+function otherColor(color: Color): Color {
+    switch(color) {
+        case Color.RED:
+            return Color.BLACK;
+        case Color.BLACK:
+            return Color.RED;
+        default:
+            return Color.NO_COLOR;
+    }
+}
+
 enum Piece {
     NONE,
     RED_MAN,
@@ -12,17 +23,18 @@ enum Piece {
     BLACK_KING
 };
 
-/*
-enum GameState {
-    RED_TURN,
-    RED_MULTICAPTURE,
-    BLACK_TURN,
-    BLACK_MULTICAPTURE,
-    RED_WIN,
-    BLACK_WIN,
-    DRAW
+function promotePiece(piece: Piece): Piece {
+    switch(piece) {
+        case Piece.RED_MAN: {
+            return Piece.RED_KING;
+        }
+        case Piece.BLACK_MAN: {
+            return Piece.BLACK_KING;
+        }
+        default:
+            return piece;
+    }
 }
-*/
 
 abstract class GameState {
     color: Color;
@@ -122,6 +134,14 @@ function pieceColor(piece: Piece): Color {
     return Color.NO_COLOR;
 }
 
+function fst<T1, T2>([fstElem, _]: [T1, T2]): T1 {
+    return fstElem;
+}
+
+function snd<T1, T2>([_, secondElem]: [T1, T2]): T2 {
+    return secondElem;
+}
+
 // Produce an array of N duplicates of val.
 function repeatN<T>(val: T, n: number):T[] {
     let arr:T[] = [];
@@ -158,8 +178,8 @@ function defaultBoard(): Piece[] {
 }
 
 class Board {
-    pieces: Piece[];
-    currentState: GameState;
+    private pieces: Piece[];
+    private currentState: GameState;
 
     constructor(pieces: Piece[] = undefined, 
                 currentState: GameState = new RegularTurn(Color.BLACK), 
@@ -181,7 +201,7 @@ class Board {
     // There's an opportunity for optimization here: keep a count of pieces, and
     // decrement whenever there is a capture. In the meantime, we just iterate
     // through all 32 spots on the board.
-    isGameOver(): boolean {
+    private isGameOver(): boolean {
         let [numRed, numBlack] = [0, 0];
         for(let i = 0; i < this.pieces.length; i++) {
             if(pieceColor(this.pieces[i]) == Color.RED) {
@@ -200,7 +220,7 @@ class Board {
     // Obtain all potential moves by obtaining all move functions of the piece,
     // applying all of them, and returning the moves that aren't undefined.
     // Note that you can't just go by falsy values, because 0 is a valid index...
-    potentialMoves(index: number): number[] {
+    private potentialMoves(index: number): number[] {
         let piece: Piece = this.pieces[index];
         return potentialMoveFunctions(piece)
             .map(f => f(index))
@@ -210,7 +230,7 @@ class Board {
     // Given an index, return a list containing tuples.
     // The first element of each tuple is the index the piece must jump over to
     // reach the second element, which is the index the piece will land.
-    captureIndices(index: number): [number, number][] {
+    private captureIndices(index: number): [number, number][] {
         let piece: Piece = this.pieces[index];
         return zip(...divvy(potentialMoveFunctions(piece).map(f => f(index))))
             .filter(([x, y]) => x !== undefined && y !== undefined)
@@ -222,7 +242,7 @@ class Board {
     // * Is it landing on an empty square?
     // * Is the piece at the index a different color from the one it's jumping
     // over?
-    canCapture(index, jumpOverIndex, targetIndex): boolean {
+    private canCapture(index, jumpOverIndex, targetIndex): boolean {
         return this.pieces[index] !== Piece.NONE &&
             this.pieces[jumpOverIndex] !== Piece.NONE &&
             this.pieces[targetIndex] === Piece.NONE &&
@@ -231,7 +251,7 @@ class Board {
 
     // Get all of the possible ways a piece can capture, and filter out the ones
     // where canCapture fails.
-    findAllCaptures(index: number): number[] {
+    private findAllCaptures(index: number): number[] {
         return this.captureIndices(index)
                    .filter(([jI, tI]) => this.canCapture(index, jI, tI), this)
                    .map(([_, target]) => target);
@@ -244,7 +264,7 @@ class Board {
     // there is anything in the list.
     // Again, there might be room for optimization - we could do this
     // iteratively and exit immediately upon finding a piece that can capture.
-    mustCapture(): boolean {
+    private mustCapture(): boolean {
         return flatten(
                 enumerate(this.pieces)
                     .filter(([_, p]) => pieceColor(p) === this.currentState.color, this)
@@ -266,11 +286,16 @@ class Board {
             if(this.potentialMoves(sourceIndex).indexOf(targetIndex) < 0) {
                 return undefined;
             }
+            // If the player's target already has a piece on it, return undefined.
+            if(this.pieces[targetIndex] != Piece.NONE) {
+                return undefined;
+            }
             // If the player must capture, but isn't capturing, return
             // undefined.
             let captureMoves: [number, number][] = this.captureIndices(sourceIndex);
             if(this.mustCapture() &&
-               captureMoves.map(([x, y]) => y).indexOf(targetIndex) < 0) {
+               captureMoves.map(snd)
+                           .indexOf(targetIndex) < 0) {
                 return undefined;
             }
             // Otherwise, it's a good move.
@@ -280,9 +305,7 @@ class Board {
                 if (currentTarget === targetIndex) {
                     // It's a capture, and we're going to move the piece and
                     // remove the jumpOverIndex.
-                    newBoard.pieces[sourceIndex] = Piece.NONE;
-                    newBoard.pieces[jumpOverIndex] = Piece.NONE;
-                    newBoard.pieces[targetIndex] = this.pieces[sourceIndex];
+                    newBoard.jump(sourceIndex, jumpOverIndex, targetIndex);
                     moveMade = true;
                     // If the current piece can jump again, we return a Multicapture.
                     if(newBoard.findAllCaptures(targetIndex).length != 0) { 
@@ -303,21 +326,11 @@ class Board {
             }
             // Now we check for promotion. If the targetIndex's row and color
             // line up, we replace the piece with a king.
-            if(newBoard.pieces[targetIndex] == Piece.BLACK_MAN &&
-               bottomRow(targetIndex)) {
-                newBoard.pieces[targetIndex] = Piece.BLACK_KING;
-            }
-            else if(newBoard.pieces[targetIndex] == Piece.RED_MAN &&
-               topRow(targetIndex)) {
-                newBoard.pieces[targetIndex] = Piece.RED_KING;
+            if(promotableLocation(this.currentState.color, targetIndex)) {
+                newBoard.promote(targetIndex);
             }
             // And now we give the turn over to the other player.
-            if(this.currentState.color === Color.RED) {
-                newBoard.currentState = new RegularTurn(Color.BLACK);
-            }
-            else {
-                newBoard.currentState = new RegularTurn(Color.RED);
-            }
+            newBoard.currentState = new RegularTurn(otherColor(this.currentState.color));
             return newBoard;
         }
         if(this.currentState.isMulticapture()) {
@@ -328,7 +341,7 @@ class Board {
                 return undefined;
             }
             let captureIndex: number = this.captureIndices(sourceIndex)
-                                           .map(([x, y]) => y)
+                                           .map(snd)
                                            .indexOf(targetIndex);
 
             if(captureIndex < 0) {
@@ -338,9 +351,7 @@ class Board {
             // Otherwise, it's a good move.
             let newBoard = new Board(this.pieces, this.currentState, true);
             let [jumpOverIndex, _] = this.captureIndices(sourceIndex)[captureIndex];
-            newBoard.pieces[sourceIndex] = Piece.NONE;
-            newBoard.pieces[jumpOverIndex] = Piece.NONE;
-            newBoard.pieces[targetIndex] = this.pieces[sourceIndex];
+            newBoard.jump(sourceIndex, jumpOverIndex, targetIndex);
             // If the current piece can jump again, we return a Multicapture.
             if(newBoard.findAllCaptures(targetIndex).length != 0) {
                 newBoard.currentState = new Multicapture(this.currentState.color, targetIndex);
@@ -352,23 +363,23 @@ class Board {
                 return newBoard;
             }
             // Otherwise, we check for promotion.
-            if(newBoard.pieces[targetIndex] == Piece.BLACK_MAN &&
-               bottomRow(targetIndex)) {
-                newBoard.pieces[targetIndex] = Piece.BLACK_KING;
-            }
-            else if(newBoard.pieces[targetIndex] == Piece.RED_MAN &&
-               topRow(targetIndex)) {
-                newBoard.pieces[targetIndex] = Piece.RED_KING;
+            if(promotableLocation(this.currentState.color, targetIndex)) {
+                newBoard.promote(targetIndex);
             }
             // And now we give the turn over to the other player.
-            if(this.currentState.color === Color.RED) {
-                newBoard.currentState = new RegularTurn(Color.BLACK);
-            }
-            else {
-                newBoard.currentState = new RegularTurn(Color.RED);
-            }
+            newBoard.currentState = new RegularTurn(otherColor(this.currentState.color));
             return newBoard;
         }
+    }
+
+    private jump(sourceIndex: number, jumpOverIndex: number, targetIndex: number) {
+        this.pieces[targetIndex] = this.pieces[sourceIndex];
+        this.pieces[sourceIndex] = Piece.NONE;
+        this.pieces[jumpOverIndex] = Piece.NONE;
+    } 
+
+    private promote(targetIndex: number) {
+        this.pieces[targetIndex] = promotePiece(this.pieces[targetIndex]);
     }
 }
 
@@ -517,5 +528,18 @@ function potentialMoveFunctions(piece: Piece): ((arg: number) => number)[] {
         case Piece.BLACK_KING: {
             return ALL_MOVES;
         }
+    }
+}
+
+function promotableLocation(color: Color, index: number): boolean {
+    switch(color) {
+        case Color.RED: {
+            return topRow(index);
+        }
+        case Color.BLACK: {
+            return bottomRow(index);
+        }
+        default:
+            return false;
     }
 }
