@@ -23,6 +23,21 @@ enum Piece {
     BLACK_KING
 };
 
+function str(piece: Piece): string {
+    switch(piece) {
+        case Piece.NONE:
+            return "_";
+        case Piece.RED_MAN:
+            return "r";
+        case Piece.RED_KING:
+            return "R";
+        case Piece.BLACK_MAN:
+            return "b";
+        case Piece.BLACK_KING:
+            return "B";
+    }
+}
+
 function promotePiece(piece: Piece): Piece {
     switch(piece) {
         case Piece.RED_MAN: {
@@ -380,6 +395,23 @@ class Board {
 
     private promote(targetIndex: number) {
         this.pieces[targetIndex] = promotePiece(this.pieces[targetIndex]);
+    }
+
+    toString() {
+        let result: String = "";
+        for(let i: number = 0; i < this.pieces.length; i++) {
+            if(i % 8 == 0) {
+                result += " ";
+            }
+            result += str(this.pieces[i]);
+            if(i % 4 == 3) {
+                result += "\n";
+            }
+            else {
+                result += " ";
+            }
+        }
+        return result;
     }
 }
 
