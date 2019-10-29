@@ -67,7 +67,7 @@ abstract class GameState {
         return false;
     }
     multicaptureIndex(): number {
-        return undefined;
+        return null;
     }
 }
 
@@ -233,13 +233,13 @@ class Board {
     }
 
     // Obtain all potential moves by obtaining all move functions of the piece,
-    // applying all of them, and returning the moves that aren't undefined.
+    // applying all of them, and returning the moves that aren't null.
     // Note that you can't just go by falsy values, because 0 is a valid index...
     private potentialMoves(index: number): number[] {
         let piece: Piece = this.pieces[index];
         return potentialMoveFunctions(piece)
             .map(f => f(index))
-            .filter(arg => arg !== undefined);
+            .filter(arg => arg !== null);
     }
 
     // Given an index, return a list containing tuples.
@@ -248,7 +248,7 @@ class Board {
     private captureIndices(index: number): [number, number][] {
         let piece: Piece = this.pieces[index];
         return zip(...divvy(potentialMoveFunctions(piece).map(f => f(index))))
-            .filter(([x, y]) => x !== undefined && y !== undefined)
+            .filter(([x, y]) => x !== null && y !== null)
     }
 
     // We care about the following:
@@ -293,25 +293,25 @@ class Board {
         if(this.currentState.isRegularTurn()) {
             let moveMade: boolean = false;
             // If the player is moving a piece that is the wrong color, return
-            // undefined.
+            // null.
             if(this.currentState.color !== pieceColor(this.pieces[sourceIndex])) {
-                return undefined;
+                return null;
             }
-            // If the player's target isn't valid, return undefined.
+            // If the player's target isn't valid, return null.
             if(this.potentialMoves(sourceIndex).indexOf(targetIndex) < 0) {
-                return undefined;
+                return null;
             }
-            // If the player's target already has a piece on it, return undefined.
+            // If the player's target already has a piece on it, return null.
             if(this.pieces[targetIndex] != Piece.NONE) {
-                return undefined;
+                return null;
             }
             // If the player must capture, but isn't capturing, return
-            // undefined.
+            // null.
             let captureMoves: [number, number][] = this.captureIndices(sourceIndex);
             if(this.mustCapture() &&
                captureMoves.map(snd)
                            .indexOf(targetIndex) < 0) {
-                return undefined;
+                return null;
             }
             // Otherwise, it's a good move.
             let newBoard: Board = new Board(this.pieces, this.currentState, true);
@@ -353,14 +353,14 @@ class Board {
             // The sourceIndex must be equal to what's in the multicapture, and
             // the targetIndex must be in the captureIndices.
             if(sourceIndex !== this.currentState.multicaptureIndex()) {
-                return undefined;
+                return null;
             }
             let captureIndex: number = this.captureIndices(sourceIndex)
                                            .map(snd)
                                            .indexOf(targetIndex);
 
             if(captureIndex < 0) {
-                return undefined;
+                return null;
             }
 
             // Otherwise, it's a good move.
@@ -468,7 +468,7 @@ function rightAdjacent(index: number): boolean {
 
 function leftUp(index: number): number {
     if(leftSide(index) || topRow(index)) {
-        return undefined;
+        return null;
     }
     if(evenRow(index)) {
         return index - 4;
@@ -478,7 +478,7 @@ function leftUp(index: number): number {
 
 function rightUp(index: number): number {
     if(rightSide(index) || topRow(index)) {
-        return undefined;
+        return null;
     }
     if(evenRow(index)) {
         return index - 3;
@@ -488,7 +488,7 @@ function rightUp(index: number): number {
 
 function leftDown(index: number): number {
     if(leftSide(index) || bottomRow(index)) {
-        return undefined;
+        return null;
     }
     if(evenRow(index)) {
         return index + 4;
@@ -498,7 +498,7 @@ function leftDown(index: number): number {
 
 function rightDown(index: number): number {
     if(rightSide(index) || bottomRow(index)) {
-        return undefined;
+        return null;
     }
     if(evenRow(index)) {
         return index + 5;
@@ -510,28 +510,28 @@ function rightDown(index: number): number {
 
 function leftUpCapture(index: number): number {
     if (leftAdjacent(index) || topAdjacent(index)) {
-        return undefined;
+        return null;
     }
     return index - 9;
 }
 
 function rightUpCapture(index: number): number {
     if(rightAdjacent(index) || topAdjacent(index)) {
-        return undefined;
+        return null;
     }
     return index - 7;
 }
 
 function leftDownCapture(index: number): number {
     if (leftAdjacent(index) || bottomAdjacent(index)) {
-        return undefined;
+        return null;
     }
     return index + 7;
 }
 
 function rightDownCapture(index: number): number {
     if(rightAdjacent(index) || bottomAdjacent(index)) {
-        return undefined;
+        return null;
     }
     return index + 9;
 }
