@@ -69,6 +69,7 @@ abstract class GameState {
     multicaptureIndex(): number {
         return null;
     }
+    abstract toObject(): object;
 }
 
 class RegularTurn extends GameState {
@@ -80,6 +81,13 @@ class RegularTurn extends GameState {
 
     isRegularTurn(): boolean {
         return true;
+    }
+
+    toObject(): object {
+        return {
+            "currentState" : "RegularTurn",
+            "color" : this.color
+        };
     }
 }
 
@@ -98,6 +106,14 @@ class Multicapture extends GameState {
     multicaptureIndex(): number {
         return this.currentIndex;
     }
+
+    toObject(): object {
+        return {
+            "currentState" : "Multicapture",
+            "color" : this.color,
+            "currentIndex" : this.currentIndex
+        };
+    }
 }
 
 class CompleteGame extends GameState {
@@ -109,6 +125,13 @@ class CompleteGame extends GameState {
 
     isCompleteGame(): boolean {
         return true;
+    }
+
+    toObject(): object {
+        return {
+            "currentState" : "CompleteGame",
+            "color" : this.color,
+        };
     }
 }
 
@@ -413,6 +436,13 @@ class Board {
         }
         return result;
     }
+
+    toObject(): object {
+        return {
+            "board" : this.pieces,
+            "gameState" : this.currentState.toObject()
+        };
+    }
 }
 
 function row(index: number): number {
@@ -574,4 +604,23 @@ function promotableLocation(color: Color, index: number): boolean {
         default:
             return false;
     }
+}
+
+function fromObject(obj: object): Board {
+    let gameStateObj: object = obj["gameState"]
+    let gameState: GameState;
+    switch(gameStateObj["currentState"]) {
+        case "RegularTurn":
+            gameState = new RegularTurn(gameStateObj["color"]);
+            break;
+        case "Multicapture":
+            gameState = new Multicapture(gameStateObj["color"], gameStateObj["currentIndex"]);
+            break;
+        case "CompleteGame":
+            gameState = new CompleteGame(gameStateObj["color"]);
+            break;
+        default:
+            throw "fromObject: Invalid currentState object";
+    }
+    return new Board(obj["pieces"], gameState, true);
 }
