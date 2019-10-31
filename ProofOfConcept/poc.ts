@@ -23,6 +23,7 @@ enum Piece {
     BLACK_KING
 };
 
+// Simple function to display a textual representation of pieces in the console.
 function str(piece: Piece): string {
     switch(piece) {
         case Piece.NONE:
@@ -38,6 +39,8 @@ function str(piece: Piece): string {
     }
 }
 
+// When a man reaches the "end" of the board, it gets promoted to a king.
+// All other pieces are unaffected.
 function promotePiece(piece: Piece): Piece {
     switch(piece) {
         case Piece.RED_MAN: {
@@ -49,6 +52,16 @@ function promotePiece(piece: Piece): Piece {
         default:
             return piece;
     }
+}
+
+function pieceColor(piece: Piece): Color {
+    if([Piece.RED_MAN, Piece.RED_KING].indexOf(piece) >= 0) {
+        return Color.RED;
+    }
+    if([Piece.BLACK_MAN, Piece.BLACK_KING].indexOf(piece) >= 0) {
+        return Color.BLACK;
+    }
+    return Color.NO_COLOR;
 }
 
 abstract class GameState {
@@ -72,6 +85,8 @@ abstract class GameState {
     abstract toObject(): object;
 }
 
+// Just a standard start to a turn. The player must capture if possible,
+// or can move a piece normally if not.
 class RegularTurn extends GameState {
     color: Color;
 
@@ -91,6 +106,8 @@ class RegularTurn extends GameState {
     }
 }
 
+// The player has captured a piece and landed on currentIndex. Another
+// capture is available, and the player must take it.
 class Multicapture extends GameState {
     color: Color;
     currentIndex: number;
@@ -116,6 +133,8 @@ class Multicapture extends GameState {
     }
 }
 
+// The game has ended in favor of color. If color === NO_COLOR, the game is a
+// draw. Currently, this is not implemented.
 class CompleteGame extends GameState {
     color: Color;
     
@@ -135,6 +154,8 @@ class CompleteGame extends GameState {
     }
 }
 
+// Equivalent to Haskell's any function. Traverses the list and applies f to
+// each element. If any result is true, return true. Otherwise, return false.
 function any<T>(f:(arg: T) => boolean, arr: T[]): boolean {
     for(let i = 0; i < arr.length; i++) {
         if(f(arr[i])) {
@@ -144,6 +165,8 @@ function any<T>(f:(arg: T) => boolean, arr: T[]): boolean {
     return false;
 }
 
+// Equivalent to Haskell's zip function. Takes two lists and combines them into
+// a single list of lists.
 function zip<T1, T2>(lst1: T1[], lst2: T2[]): [T1, T2][] {
     let results: [T1, T2][] = []
     let leastLength = Math.min(lst1.length, lst2.length);
@@ -153,6 +176,8 @@ function zip<T1, T2>(lst1: T1[], lst2: T2[]): [T1, T2][] {
     return results;
 }
 
+// Takes a list and places the even elements (index 0, 2, 4, etc)
+// into the first list, and places the odd elements into the second list.
 function divvy<T>(lst: T[]): [T[], T[]] {
     let [result1, result2] = [[], []];
     for(let i = 0; i < lst.length-1; i += 2) {
@@ -162,20 +187,12 @@ function divvy<T>(lst: T[]): [T[], T[]] {
     return [result1, result2];
 }
 
-function pieceColor(piece: Piece): Color {
-    if([Piece.RED_MAN, Piece.RED_KING].indexOf(piece) >= 0) {
-        return Color.RED;
-    }
-    if([Piece.BLACK_MAN, Piece.BLACK_KING].indexOf(piece) >= 0) {
-        return Color.BLACK;
-    }
-    return Color.NO_COLOR;
-}
-
+// Takes a tuple of two elements and returns the first element.
 function fst<T1, T2>([fstElem, _]: [T1, T2]): T1 {
     return fstElem;
 }
 
+// Takes a tuple of two elements and returns the second element.
 function snd<T1, T2>([_, secondElem]: [T1, T2]): T2 {
     return secondElem;
 }
@@ -268,6 +285,17 @@ class Board {
     // Given an index, return a list containing tuples.
     // The first element of each tuple is the index the piece must jump over to
     // reach the second element, which is the index the piece will land.
+    //
+    // It's important to note that potentialMoveFunctions is aligned so that the
+    // 0th element is a normal move, and the 1st element is a capture move.
+    // The 2nd element is a normal move, and the 3rd element is a capture move.
+    //
+    // This means that divvy can create two lists - one of regular moves, and one
+    // of captures. We then zip them together and filter out any elements that
+    // contain nulls (are invalid moves).
+    //
+    // Note that no checks are performed to see if this is a valid capture; it only
+    // gives possible indices, which will be checked by findAllCaptures.
     private captureIndices(index: number): [number, number][] {
         let piece: Piece = this.pieces[index];
         return zip(...divvy(potentialMoveFunctions(piece).map(f => f(index))))
@@ -292,7 +320,7 @@ class Board {
     private findAllCaptures(index: number): number[] {
         return this.captureIndices(index)
                    .filter(([jI, tI]) => this.canCapture(index, jI, tI), this)
-                   .map(([_, target]) => target);
+                   .map(snd);
     }
 
     // Iterate through all of the squares on the board to see if there is a
@@ -420,6 +448,7 @@ class Board {
         this.pieces[targetIndex] = promotePiece(this.pieces[targetIndex]);
     }
 
+    // Simple string representation to print the state of the board in the console.
     toString() {
         let result: String = "";
         for(let i: number = 0; i < this.pieces.length; i++) {
@@ -444,6 +473,18 @@ class Board {
         };
     }
 }
+
+// We number the board indices as follows:
+//     0   1   2   3
+//   4   5   6   7
+//     8   9  10  11
+//  12  13  14  15
+//    16  17  18  19
+//  20  21  22  23
+//    24  25  26  27
+//  28  29  30  31
+// Starting the game, Black occupies the top three rows. Red occupies the bottom
+// three rows.
 
 function row(index: number): number {
     return Math.floor(index / 4);
