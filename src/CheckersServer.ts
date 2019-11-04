@@ -24,6 +24,7 @@ class CheckersServer extends Server {
 }
 
   public start(port: number): void {
+    this.app.use(express.static(__dirname));
     this.app.get('*', (req, res) => {
       res.send('Server\'s up. Port: ' + port);
     });
