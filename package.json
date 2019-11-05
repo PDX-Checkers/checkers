@@ -21,6 +21,8 @@
   },
   "homepage": "https://github.com/PDX-Checkers/checkers#readme",
   "dependencies": {
+    "@overnightjs/core": "^1.6.9",
+    "@overnightjs/logger": "^1.1.9",
     "express": "^4.17.1"
   },
   "devDependencies": {
