@@ -2,7 +2,6 @@ import { Controller, Get } from '@overnightjs/core';
 import { Logger } from '@overnightjs/logger';
 import { Request, Response } from 'express';
 import { DbManager } from '../DbManager'
-import { PoolConnection } from 'mariadb';
 
 
 @Controller('api/game')

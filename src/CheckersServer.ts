@@ -29,8 +29,8 @@ class CheckersServer extends Server {
     await manager.initialize();
 
     this.app.use(express.static(__dirname));
-    this.app.get('*', (req, res) => {
-      res.send('Server\'s up. Port: ' + port);
+    this.app.get('/', (req, res) => {
+      res.send('/index.html')
     });
     this.app.listen(port, () => {
       Logger.Info('Server\'s up. Port: ' + port);
