@@ -1,0 +1,5 @@
+{
+  "host": "This is a sample db config file",
+  "user": "Put this in ~/.config/",
+  "password": "I have nothing else to say"
+}
