@@ -3,4 +3,5 @@ service mysql start
 git clone https://github.com/PDX-Checkers/checkers.git
 pushd checkers
     npm install
+    npm run build
     npm run start-dev
