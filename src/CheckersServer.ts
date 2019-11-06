@@ -24,9 +24,9 @@ class CheckersServer extends Server {
     super.addControllers(ctlrInstances);
 }
 
-  public start(port: number): void {
+  public async start(port: number): Promise<any> {
     const manager = new DbManager();
-    manager.initialize();
+    await manager.initialize();
 
     this.app.use(express.static(__dirname));
     this.app.get('*', (req, res) => {
