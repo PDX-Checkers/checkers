@@ -2,6 +2,7 @@ import * as express from 'express'
 import * as controllers from './controllers';
 import { Server } from '@overnightjs/core';
 import { Logger } from '@overnightjs/logger';
+import { DbManager } from './DbManager'
 
 class CheckersServer extends Server {
 
@@ -24,6 +25,9 @@ class CheckersServer extends Server {
 }
 
   public start(port: number): void {
+    const manager = new DbManager();
+    manager.initialize();
+
     this.app.use(express.static(__dirname));
     this.app.get('*', (req, res) => {
       res.send('Server\'s up. Port: ' + port);

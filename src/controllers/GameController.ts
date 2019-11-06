@@ -1,23 +1,15 @@
-import { Request, Response } from 'express';
 import { Controller, Get } from '@overnightjs/core';
 import { Logger } from '@overnightjs/logger';
-import * as mariadb from "mariadb";
+import { Request, Response } from 'express';
+import { DbManager } from '../DbManager'
 
 
 @Controller('api/game')
 export class GameController {
 
   private queryUsers(): Promise<object> {
-    const pool = mariadb.createPool({
-      user: "blarg",
-      password: "blarg",
-      database: "checkers",
-      connectionLimit: 5
-    });
-    return pool.getConnection()
-               .then(conn => 
-                conn.query("SELECT * FROM users"))
-               .then()
+    return DbManager.pool.getConnection()
+               .then(conn => conn.query('SELECT * FROM users'))
                .catch(err => err);
   }
 
@@ -25,8 +17,7 @@ export class GameController {
   private getGameState(req: Request, res: Response) {
     Logger.Info(req.params.msg);
     this.queryUsers()
-        .then(result => 
-          res.status(200).json({
+        .then(result => res.status(200).json({
             message: result
           }));
   }
