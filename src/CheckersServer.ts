@@ -2,6 +2,7 @@ import * as express from 'express'
 import * as controllers from './controllers';
 import { Server } from '@overnightjs/core';
 import { Logger } from '@overnightjs/logger';
+import { DbManager } from './DbManager'
 
 class CheckersServer extends Server {
 
@@ -23,10 +24,13 @@ class CheckersServer extends Server {
     super.addControllers(ctlrInstances);
 }
 
-  public start(port: number): void {
+  public async start(port: number): Promise<any> {
+    const manager = new DbManager();
+    await manager.initialize();
+
     this.app.use(express.static(__dirname));
-    this.app.get('*', (req, res) => {
-      res.send('Server\'s up. Port: ' + port);
+    this.app.get('/', (req, res) => {
+      res.send('/index.html')
     });
     this.app.listen(port, () => {
       Logger.Info('Server\'s up. Port: ' + port);
