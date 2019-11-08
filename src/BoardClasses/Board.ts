@@ -232,7 +232,7 @@ function defaultBoard(): Piece[] {
                 .concat(repeatN(Piece.RED_MAN, 12));
 }
 
-class Board {
+export class Board {
     private pieces: Piece[];
     private currentState: GameState;
 
@@ -647,7 +647,7 @@ function promotableLocation(color: Color, index: number): boolean {
     }
 }
 
-function fromObject(obj: object): Board {
+export function fromObject(obj: object): Board {
     let gameStateObj: object = obj["gameState"]
     let gameState: GameState;
     switch(gameStateObj["currentState"]) {
