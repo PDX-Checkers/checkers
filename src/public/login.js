@@ -15,3 +15,11 @@ function doLogin(username, password){
   xmlhttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
   xmlhttp.send(JSON.stringify({ "username": username, "password": password }));
 }
+
+function doLogout(){
+  var xmlhttp = new XMLHttpRequest();   // new HttpRequest instance 
+  var theUrl = "http://localhost:3000/api/users/logout";
+  xmlhttp.open("POST", theUrl);
+  xmlhttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+  xmlhttp.send();
+}

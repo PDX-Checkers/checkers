@@ -8,11 +8,11 @@ import * as session from 'express-session'
 import * as passport from 'passport'
 import { Strategy } from 'passport-local'
 import { DbHelpers } from './helpers/DbHelpers';
-import * as hash from 'password-hash';
 import { User } from './models/User';
+import * as bcrypt from 'bcrypt';
 import * as cors from 'cors';
 /* tslint:disable-next-line */
-// const FileStore = require('session-file-store')(session);
+const FileStore = require('session-file-store')(session);
 
 class CheckersServer extends Server {
 
@@ -51,7 +51,7 @@ class CheckersServer extends Server {
         if (user === null) {
           return done(null, false, { message: 'Incorrect username.' });
         }
-        if (!hash.verify(password, user.getPassword())) {
+        if (!bcrypt.compare(password, user.getPassword())) {
           return done(null, false, { message: 'Incorrect Password.' });
         }
         return done(null, user)
@@ -77,8 +77,9 @@ class CheckersServer extends Server {
         return uuid.v4();
       },
       secret: this.totallyNotSecret,
-      resave: true,
-      saveUninitialized: false,
+      resave: false,
+      saveUninitialized: true,
+      store: new FileStore()
     }));
 
     // Starts up authentication and lets passport know about sessions

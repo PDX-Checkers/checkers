@@ -1,11 +1,12 @@
-import { Controller, Get, Post, Middleware } from '@overnightjs/core';
+import { Controller, Get, Post, Middleware, Delete } from '@overnightjs/core';
 import { Logger } from '@overnightjs/logger';
 import { Request, Response } from 'express';
 import { DbManager } from '../DbManager'
-import * as hash from 'password-hash'
 import { allItemsHaveValues } from './ControllerHelpers'
 import passport = require('passport');
 import { DbHelpers } from '../helpers/DbHelpers';
+import * as bcrypt from 'bcrypt'
+import { saltRounds } from '../helpers/HashHelpers';
 
 @Controller('api/users')
 export class UserController {
@@ -23,7 +24,7 @@ export class UserController {
   private async registerUser(req: Request, res: Response) {
     let user;
     const username = req.body.username;
-    const password = hash.generate(req.body.password);
+    const password = await bcrypt.hash(req.body.password, saltRounds);
     if (!allItemsHaveValues([username, password])) {
       res.status(400).json({message: 'Username and Password must have values'});
     }
@@ -44,6 +45,16 @@ export class UserController {
   @Middleware(passport.authenticate('local'))
   private async login(req: Request, res: Response) {
     res.status(200).json({message: 'Login Successful'});
+  }
+
+  @Post('logout')
+  private async logout(req: Request, res: Response) {
+    if (req.isAuthenticated()) {
+      req.logout();
+      res.status(200).json({message: 'Logged out'});
+    } else {
+      res.status(400).json({message: 'You are not logged in'});
+    }
   }
 
   // Tests that you're logged in
