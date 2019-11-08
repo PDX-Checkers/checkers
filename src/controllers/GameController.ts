@@ -1,21 +1,34 @@
-import { Controller, Get } from '@overnightjs/core';
+import { Controller, Get, Post } from '@overnightjs/core';
 import { Logger } from '@overnightjs/logger';
 import { Request, Response } from 'express';
-import { DbManager } from '../DbManager'
-
 
 @Controller('api/game')
 export class GameController {
 
-  private async queryUsers() {
-    const query = 'SELECT * FROM users';
-    return await DbManager.doQuery(query);
+  @Post()
+  private async createNewGame(req: Request, res: Response) {
+    // isAuthenticated verifies the user is logged in
+    if (req.isAuthenticated()) {
+
+    }
+    // Do create active game stuff here
+    res.status(200).json({message: 'result'});
   }
 
   @Get()
-  private async getGameState(req: Request, res: Response) {
-    Logger.Info(req.params.msg);
-    const result = await this.queryUsers()
-    res.status(200).json({message: result});
+  private async getGames(req: Request, res: Response) {
+    if (req.isAuthenticated()) {
+
+    }
+    res.status(200).json({message: 'result'});
   }
+
+  @Post(':id') 
+  private async joinGame(req: Request, res: Response) {
+    if (req.isAuthenticated()) {
+
+    }
+    res.status(200).json({message: 'result'});
+  }
+
 }
