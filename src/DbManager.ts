@@ -46,8 +46,7 @@ export class DbManager {
 
   private async createTables() {
     const createUserTable = `CREATE TABLE IF NOT EXISTS users (
-      id VARCHAR(36) PRIMARY KEY,
-      username TEXT,
+      username VARCHAR(50) PRIMARY KEY,
       password TEXT,
       profile TEXT
     )`;
@@ -55,11 +54,11 @@ export class DbManager {
 
     const createGameTable = `CREATE TABLE IF NOT EXISTS games (
       id VARCHAR(36) PRIMARY KEY,
-      red_player VARCHAR(36),
-      black_player VARCHAR(36),
+      red_player VARCHAR(50),
+      black_player VARCHAR(50),
       result LONGTEXT,
-      CONSTRAINT FOREIGN KEY (red_player) REFERENCES users(id) ON DELETE CASCADE,
-      CONSTRAINT FOREIGN KEY (black_player) REFERENCES users(id) ON DELETE CASCADE
+      CONSTRAINT FOREIGN KEY (red_player) REFERENCES users(username) ON DELETE CASCADE,
+      CONSTRAINT FOREIGN KEY (black_player) REFERENCES users(username) ON DELETE CASCADE
     )`
     await DbManager.doQuery(createGameTable);
   }

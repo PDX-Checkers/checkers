@@ -1,6 +1,5 @@
 import { DbManager } from '../DbManager'
 import { User } from '../models/User';
-import * as uuid from 'node-uuid'
 
 export class DbHelpers {
   static async getUser(username: string) {
@@ -14,9 +13,8 @@ export class DbHelpers {
   }
 
   static async createUser(username: string, password: string) {
-    const id = uuid.v4();
     const query =
-    `INSERT INTO users (id, username, password) values ('${id}','${username}', '${password}')`;
+    `INSERT INTO users (username, password) values ('${username}', '${password}')`;
     return await DbManager.doQuery(query);
   }
 }
