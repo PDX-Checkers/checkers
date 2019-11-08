@@ -2,7 +2,7 @@ import { Controller, Get, Post, Middleware, Delete } from '@overnightjs/core';
 import { Logger } from '@overnightjs/logger';
 import { Request, Response } from 'express';
 import { DbManager } from '../DbManager'
-import { allItemsHaveValues } from './ControllerHelpers'
+import { allItemsHaveValues } from '../helpers/ControllerHelpers'
 import passport = require('passport');
 import { DbHelpers } from '../helpers/DbHelpers';
 import * as bcrypt from 'bcrypt'
