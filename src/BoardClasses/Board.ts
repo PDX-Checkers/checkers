@@ -1,12 +1,12 @@
 import * as utils from "./Utils"
 
-enum Color {
+export enum Color {
     NO_COLOR,
     RED,
     BLACK,
 };
 
-function otherColor(color: Color): Color {
+export function otherColor(color: Color): Color {
     switch(color) {
         case Color.RED:
             return Color.BLACK;
@@ -85,6 +85,7 @@ abstract class GameState {
         return null;
     }
     abstract toObject(): object;
+    abstract copy(): GameState;
 }
 
 // Just a standard start to a turn. The player must capture if possible,
@@ -103,6 +104,10 @@ class RegularTurn extends GameState {
             "currentState" : "RegularTurn",
             "color" : this.color
         };
+    }
+
+    copy(): GameState {
+        return new RegularTurn(this.color);
     }
 }
 
@@ -130,6 +135,10 @@ class Multicapture extends GameState {
             "currentIndex" : this.currentIndex
         };
     }
+
+    copy(): GameState {
+        return new Multicapture(this.color, this.currentIndex);
+    }
 }
 
 // The game has ended in favor of color. If color === NO_COLOR, the game is a
@@ -148,6 +157,10 @@ class CompleteGame extends GameState {
             "currentState" : "CompleteGame",
             "color" : this.color,
         };
+    }
+
+    copy() {
+        return new CompleteGame(this.color);
     }
 }
 
@@ -178,6 +191,14 @@ export class Board {
             }
         }
         this.currentState = currentState;
+    }
+
+    public copy(): Board {
+        return new Board(this.pieces, this.currentState.copy(), true);
+    }
+
+    getCurrentState(): GameState {
+        return this.currentState.copy();
     }
 
     // There's an opportunity for optimization here: keep a count of pieces, and
