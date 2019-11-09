@@ -1,5 +1,4 @@
 import { Board, Color } from "./Board"
-import * as ws from "ws";
 
 abstract class JSONRequest {
     constructor() {}
@@ -171,15 +170,15 @@ function parseMessageJSON(json: string): JSONRequest | null {
     return null;
 }
 
-class ActiveGame {
-    blackID: number;
-    redID?: number;
+export class ActiveGame {
+    blackID: string;
+    redID?: string;
     blackSocket: WebSocket;
     redSocket?: WebSocket;
     boardState: Board;
 
     // The Black player creates the game. The Red player joins the game.
-    constructor(blackID: number, blackSocket: WebSocket) {
+    constructor(blackID: string, blackSocket: WebSocket) {
         this.blackID = blackID;
         this.redID = undefined;
         this.blackSocket = blackSocket;
@@ -188,7 +187,7 @@ class ActiveGame {
         blackSocket.send("Created Game");
     }
 
-    join(redID: number, redSocket: WebSocket) {
+    join(redID: string, redSocket: WebSocket) {
         if(this.redID !== undefined || this.redSocket !== undefined) {
             throw "join: redID or redSocket already exist!";
         }
