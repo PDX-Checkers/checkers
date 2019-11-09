@@ -1,8 +1,6 @@
 import * as mariadb from 'mariadb';
 import * as fs from 'fs';
 import * as os from 'os';
-import { Logger } from '@overnightjs/logger';
-import { create } from 'domain';
 
 export class DbManager {
   static pool: mariadb.Pool;
@@ -48,12 +46,21 @@ export class DbManager {
 
   private async createTables() {
     const createUserTable = `CREATE TABLE IF NOT EXISTS users (
-      username VARCHAR(30) PRIMARY KEY,
-      password VARCHAR(255),
-      wins INT,
-      losses INT
+      username VARCHAR(50) PRIMARY KEY,
+      password TEXT,
+      profile TEXT
     )`;
     await DbManager.doQuery(createUserTable);
+
+    const createGameTable = `CREATE TABLE IF NOT EXISTS games (
+      id VARCHAR(36) PRIMARY KEY,
+      red_player VARCHAR(50),
+      black_player VARCHAR(50),
+      result LONGTEXT,
+      CONSTRAINT FOREIGN KEY (red_player) REFERENCES users(username) ON DELETE CASCADE,
+      CONSTRAINT FOREIGN KEY (black_player) REFERENCES users(username) ON DELETE CASCADE
+    )`
+    await DbManager.doQuery(createGameTable);
   }
 
   static async doQuery(queryToDo: string) {
