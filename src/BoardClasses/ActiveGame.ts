@@ -171,7 +171,7 @@ function parseMessageJSON(json: string): JSONRequest | null {
     return null;
 }
 
-class BoardState {
+class ActiveGame {
     blackID: number;
     redID?: number;
     blackSocket: WebSocket;
@@ -259,6 +259,4 @@ class BoardState {
                     new JSONValidMoveResponse(this.boardState).toObject()));
         }
     }
-
-
 }
