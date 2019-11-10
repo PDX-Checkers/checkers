@@ -12,7 +12,7 @@ import { User } from './models/User';
 import * as bcrypt from 'bcrypt';
 import * as cors from 'cors';
 import * as expressWs from 'express-ws';
-import { WebsocketController } from './controllers/WebsocketController';
+import { ActiveGameController } from './controllers/ActiveGameController';
 /* tslint:disable-next-line */
 const FileStore = require('session-file-store')(session);
 
@@ -40,8 +40,8 @@ class CheckersServer extends Server {
     super.addControllers(ctlrInstances);
 
     // Unfortunately, the websockets controller is not playing nicely here.
-    let wsController = new WebsocketController();
-    this.app.use('/api/ws', wsController.getRoutes());
+    let AGController = new ActiveGameController();
+    this.app.use('/api/ws', AGController.getRoutes());
   }
 
   public async start(port: number): Promise<any> {

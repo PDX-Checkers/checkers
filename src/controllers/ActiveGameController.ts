@@ -1,10 +1,22 @@
-import * as ag from './ActiveGame';
+import { ActiveGame } from '../BoardClasses/ActiveGame';
+import * as express from 'express';
 
 export class ActiveGameController {
-    private games: Map<string, ag.ActiveGame>;
+    private games: Map<string, ActiveGame>;
+
+    getRoutes(): express.Router {
+        let router = express.Router();
+        let thisArg: ActiveGameController = this;
+        router.ws('/', function(ws, req) {
+            // lol typecasting to avoid this issue:
+            // https://github.com/websockets/ws/issues/1583
+            ws.on('message', wsListener(thisArg, <WebSocket><unknown>ws));
+        });
+        return router;
+    }
 
     constructor() {
-        this.games = new Map<string, ag.ActiveGame>();
+        this.games = new Map<string, ActiveGame>();
     }
 
     public createGame(playerID: string, ws: WebSocket) {
@@ -12,11 +24,11 @@ export class ActiveGameController {
         while(key === undefined || this.games.has(key)) {
             key = createGameID();
         }
-        this.games.set(key, new ag.ActiveGame(playerID, ws));
+        this.games.set(key, new ActiveGame(playerID, ws));
     }
 
     public joinGame(gameID: string, playerID: string, ws: WebSocket) {
-        let g: ag.ActiveGame | undefined = this.games.get(gameID);
+        let g: ActiveGame | undefined = this.games.get(gameID);
         if(g !== undefined) {
             g.join(playerID, ws);
         }
@@ -27,6 +39,11 @@ export class ActiveGameController {
 
     public getGameIDs(): string[] {
         return Array.from(this.games.keys());
+    }
+
+    processMessage(ws: WebSocket, msg: string) {
+        console.log("ayylmao");
+        ws.send(`I got your message: ${msg}`);
     }
 }
 
@@ -41,4 +58,8 @@ function createGameID(): string {
     return new Array(15).fill(undefined)
                         .map(_ => randomChoice(characterArray))
                         .join("");
+}
+
+function wsListener(controller: ActiveGameController, ws: WebSocket): ((s: string) => void) {
+    return function(s: string) { controller.processMessage(ws, s) };
 }
