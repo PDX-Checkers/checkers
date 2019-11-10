@@ -23,7 +23,13 @@ class CheckersServer extends Server {
 
   constructor() {
     super(true);
-    // Used if we want to access the websocket server and whatnot.
+
+    // MODIFIES THE EXPRESS APPLICATION!
+    // This function adds Websocket capabilities to our Express app.
+    // In addition, this.wsInstance is our interface for accessing the
+    // websocket server with this.wsInstance.getWss().
+    // Having this member is necessary if we want to do things like send
+    // a message to every websocket.
     this.wsInstance = expressWs(this.app);
 
     this.totallyNotSecret = 'I am smell blind';
@@ -40,6 +46,8 @@ class CheckersServer extends Server {
     super.addControllers(ctlrInstances);
 
     // Unfortunately, the websockets controller is not playing nicely here.
+    // Because we can't use the Overnight decorators, we have to treat this one
+    // separately and do it the old-fashioned Express way.
     let AGController = new ActiveGameController();
     this.app.use('/api/ws', AGController.getRoutes());
   }
