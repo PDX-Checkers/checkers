@@ -1,6 +1,12 @@
 import { ActiveGame } from '../BoardClasses/ActiveGame';
 import * as express from 'express';
 
+// This Controller contains a data structure of games in progress. Each
+// ActiveGame object will contain two websockets, and thus a lot of the
+// logic in this class consists of constructing objects, copying
+// websocket references around, and subscribing them to things.
+// Note that the ActiveGame class also deals a lot with websockets.
+
 export class ActiveGameController {
     private games: Map<string, ActiveGame>;
 
@@ -41,6 +47,8 @@ export class ActiveGameController {
         return Array.from(this.games.keys());
     }
 
+    // For now, this just echoes a message. In the future, this will be used to
+    // process creating games and joining them.
     processMessage(ws: WebSocket, msg: string) {
         console.log("ayylmao");
         ws.send(`I got your message: ${msg}`);
