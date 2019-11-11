@@ -1,5 +1,9 @@
+import { Logger } from '@overnightjs/logger';
 import { ActiveGame } from '../BoardClasses/ActiveGame';
-import * as express from 'express';
+import { DbManager } from '../DbManager'
+import { Router, Request } from 'express';
+import { ParamsDictionary } from 'express-serve-static-core';
+import OOPEventWebSocket = require('ws');
 
 // This Controller contains a data structure of games in progress. Each
 // ActiveGame object will contain two websockets, and thus a lot of the
@@ -9,20 +13,18 @@ import * as express from 'express';
 
 export class ActiveGameController {
     private games: Map<string, ActiveGame>;
+    private userSockets: Map<string, OOPEventWebSocket>;
 
-    getRoutes(): express.Router {
-        let router = express.Router();
+    getRoutes(): Router {
+        let router = Router();
         let thisArg: ActiveGameController = this;
-        router.ws('/', function(ws, req) {
-            // lol typecasting to avoid this issue:
-            // https://github.com/websockets/ws/issues/1583
-            ws.on('message', wsListener(thisArg, <WebSocket><unknown>ws));
-        });
+        router.ws('/', wsSubscriber(thisArg));
         return router;
     }
 
     constructor() {
         this.games = new Map<string, ActiveGame>();
+        this.userSockets = new Map<string, OOPEventWebSocket>();
     }
 
     public createGame(playerID: string, ws: WebSocket) {
@@ -49,9 +51,21 @@ export class ActiveGameController {
 
     // For now, this just echoes a message. In the future, this will be used to
     // process creating games and joining them.
-    processMessage(ws: WebSocket, msg: string) {
+    processMessage(ws: OOPEventWebSocket, msg: string) {
         console.log("ayylmao");
         ws.send(`I got your message: ${msg}`);
+    }
+
+    public getUserSocket(username: string): OOPEventWebSocket | undefined {
+        return this.userSockets.get(username);
+    }
+
+    public addUserSocket(username: string, ws: OOPEventWebSocket): void {
+        this.userSockets.set(username, ws);
+    }
+
+    public removeUserSocket(username: string): void {
+        this.userSockets.delete(username);
     }
 }
 
@@ -68,6 +82,43 @@ function createGameID(): string {
                         .join("");
 }
 
-function wsListener(controller: ActiveGameController, ws: WebSocket): ((s: string) => void) {
+function wsSubscriber(controller: ActiveGameController): ((ws: OOPEventWebSocket, req: Request<ParamsDictionary>) => void) {
+    return function(ws, req) {
+        if(req.isAuthenticated()) {
+            let userObj: any = <any>req.user;
+            let username: any = userObj["username"];
+            if(username === undefined || typeof username !== "string") {
+                throw `wsSubscriber: username ${username} is somehow invalid`
+            }
+            Logger.Info(`Received websocket connection from ${username}`);
+            if(controller.getUserSocket(<string>username)) {
+                Logger.Info(`But it's a duplicate...`);
+                ws.send("You already connected!");
+                ws.close();
+            }
+            // Happy path - subscribes the websocket to the Listener.
+            else {
+                ws.on('message', wsListener(controller, ws));
+                ws.on('close', wsCloser(controller, username));
+                controller.addUserSocket(username, ws);
+            }
+        }
+        else {
+            Logger.Info("Received unauthorized websocket request.");
+            ws.send("You aren't authenticated, fool!");
+            ws.close();
+        }
+    }
+}
+
+function wsListener(controller: ActiveGameController, ws: OOPEventWebSocket): ((s: string) => void) {
     return function(s: string) { controller.processMessage(ws, s) };
+}
+
+function wsCloser(controller: ActiveGameController, username: string):
+    (() => void) {
+    return function() { 
+        Logger.Info(`Closing connection with ${username}`);
+        controller.removeUserSocket(username);
+    };
 }

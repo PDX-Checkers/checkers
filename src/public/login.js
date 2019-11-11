@@ -23,3 +23,11 @@ function doLogout(){
   xmlhttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
   xmlhttp.send();
 }
+
+function createWebsocket(){
+  var ws = new WebSocket("ws://localhost:3000/api/ws");
+  ws.onmessage = function(event) {
+    console.log(`Got reply: ${event.data}`);
+  };
+  return ws;
+}
