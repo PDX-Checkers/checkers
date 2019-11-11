@@ -1,10 +1,12 @@
-enum Color {
+import * as utils from "./Utils"
+
+export enum Color {
     NO_COLOR,
     RED,
     BLACK,
 };
 
-function otherColor(color: Color): Color {
+export function otherColor(color: Color): Color {
     switch(color) {
         case Color.RED:
             return Color.BLACK;
@@ -79,17 +81,16 @@ abstract class GameState {
     isCompleteGame(): boolean {
         return false;
     }
-    multicaptureIndex(): number {
+    multicaptureIndex(): number | null {
         return null;
     }
     abstract toObject(): object;
+    abstract copy(): GameState;
 }
 
 // Just a standard start to a turn. The player must capture if possible,
 // or can move a piece normally if not.
 class RegularTurn extends GameState {
-    color: Color;
-
     constructor(color: Color) {
         super(color);
     }
@@ -104,12 +105,15 @@ class RegularTurn extends GameState {
             "color" : this.color
         };
     }
+
+    copy(): GameState {
+        return new RegularTurn(this.color);
+    }
 }
 
 // The player has captured a piece and landed on currentIndex. Another
 // capture is available, and the player must take it.
 class Multicapture extends GameState {
-    color: Color;
     currentIndex: number;
 
     constructor(color: Color, currentIndex: number) {
@@ -131,13 +135,15 @@ class Multicapture extends GameState {
             "currentIndex" : this.currentIndex
         };
     }
+
+    copy(): GameState {
+        return new Multicapture(this.color, this.currentIndex);
+    }
 }
 
 // The game has ended in favor of color. If color === NO_COLOR, the game is a
 // draw. Currently, this is not implemented.
 class CompleteGame extends GameState {
-    color: Color;
-    
     constructor(color: Color) {
         super(color);
     }
@@ -152,105 +158,47 @@ class CompleteGame extends GameState {
             "color" : this.color,
         };
     }
-}
 
-// Equivalent to Haskell's any function. Traverses the list and applies f to
-// each element. If any result is true, return true. Otherwise, return false.
-function any<T>(f:(arg: T) => boolean, arr: T[]): boolean {
-    for(let i = 0; i < arr.length; i++) {
-        if(f(arr[i])) {
-            return true;
-        }
+    copy() {
+        return new CompleteGame(this.color);
     }
-    return false;
-}
-
-// Equivalent to Haskell's zip function. Takes two lists and combines them into
-// a single list of lists.
-function zip<T1, T2>(lst1: T1[], lst2: T2[]): [T1, T2][] {
-    let results: [T1, T2][] = []
-    let leastLength = Math.min(lst1.length, lst2.length);
-    for(let i = 0; i < leastLength; i++) {
-        results.push([lst1[i], lst2[i]]);
-    }
-    return results;
-}
-
-// Takes a list and places the even elements (index 0, 2, 4, etc)
-// into the first list, and places the odd elements into the second list.
-function divvy<T>(lst: T[]): [T[], T[]] {
-    let [result1, result2] = [[], []];
-    for(let i = 0; i < lst.length-1; i += 2) {
-        result1.push(lst[i]);
-        result2.push(lst[i+1]);
-    }
-    return [result1, result2];
-}
-
-// Takes a tuple of two elements and returns the first element.
-function fst<T1, T2>([fstElem, _]: [T1, T2]): T1 {
-    return fstElem;
-}
-
-// Takes a tuple of two elements and returns the second element.
-function snd<T1, T2>([_, secondElem]: [T1, T2]): T2 {
-    return secondElem;
-}
-
-// Produce an array of N duplicates of val.
-function repeatN<T>(val: T, n: number):T[] {
-    let arr:T[] = [];
-    for(let i = 0; i < n; i++) {
-        arr.push(val);
-    }
-    return arr;
-} 
-
-function range(start: number, end: number): number[] {
-    let result: number[] = [];
-    for(let i = start; i < end; i++) {
-        result.push(i);
-    }
-    return result;
-}
-
-// Equivalent to the Python function - zip a list with numbers, starting from 0.
-function enumerate<T>(lst: T[]): [number, T][] {
-    return zip(range(0, lst.length+1), lst);
-}
-
-// Concatenate a bunch of lists into a single list.
-function flatten<T>(lstlst: T[][]): T[] {
-    return lstlst.reduce((accumulator, lst) => accumulator.concat(...lst), [])
 }
 
 // Default starting board - black pieces in the top three rows, blank squares in
 // the next two rows, and red pieces in the bottom three rows.
 function defaultBoard(): Piece[] {
-    return repeatN(Piece.BLACK_MAN, 12)
-                .concat(repeatN(Piece.NONE, 8))
-                .concat(repeatN(Piece.RED_MAN, 12));
+    return utils.repeatN(Piece.BLACK_MAN, 12)
+                    .concat(utils.repeatN(Piece.NONE, 8))
+                    .concat(utils.repeatN(Piece.RED_MAN, 12));
 }
 
-class Board {
+export class Board {
     private pieces: Piece[];
     private currentState: GameState;
 
-    constructor(pieces: Piece[] = undefined, 
+    constructor(pieces?: Piece[], 
                 currentState: GameState = new RegularTurn(Color.BLACK), 
                 deepcopy: boolean = false) {
-        if(pieces === undefined) {
+        if(pieces === null) {
             this.pieces = defaultBoard();
         }
         else {
             if(deepcopy) {
-                this.pieces = [...pieces];
+                this.pieces = [...<Piece[]>pieces];
             }
             else {
-                this.pieces = pieces;
+                this.pieces = <Piece[]>pieces;
             }
         }
         this.currentState = currentState;
+    }
+
+    public copy(): Board {
+        return new Board(this.pieces, this.currentState.copy(), true);
+    }
+
+    getCurrentState(): GameState {
+        return this.currentState.copy();
     }
 
     // There's an opportunity for optimization here: keep a count of pieces, and
@@ -277,7 +225,7 @@ class Board {
     // Note that you can't just go by falsy values, because 0 is a valid index...
     private potentialMoves(index: number): number[] {
         let piece: Piece = this.pieces[index];
-        return potentialMoveFunctions(piece)
+        return <number[]>potentialMoveFunctions(piece)
             .map(f => f(index))
             .filter(arg => arg !== null);
     }
@@ -298,8 +246,8 @@ class Board {
     // gives possible indices, which will be checked by findAllCaptures.
     private captureIndices(index: number): [number, number][] {
         let piece: Piece = this.pieces[index];
-        return zip(...divvy(potentialMoveFunctions(piece).map(f => f(index))))
-            .filter(([x, y]) => x !== null && y !== null)
+        return <[number, number][]>utils.zip(...utils.divvy(potentialMoveFunctions(piece).map(f => f(index))))
+                    .filter(([x, y]) => x !== null && y !== null)
     }
 
     // We care about the following:
@@ -308,7 +256,7 @@ class Board {
     // * Is it landing on an empty square?
     // * Is the piece at the index a different color from the one it's jumping
     // over?
-    private canCapture(index, jumpOverIndex, targetIndex): boolean {
+    private canCapture(index: number, jumpOverIndex: number, targetIndex: number): boolean {
         return this.pieces[index] !== Piece.NONE &&
             this.pieces[jumpOverIndex] !== Piece.NONE &&
             this.pieces[targetIndex] === Piece.NONE &&
@@ -320,7 +268,7 @@ class Board {
     private findAllCaptures(index: number): number[] {
         return this.captureIndices(index)
                    .filter(([jI, tI]) => this.canCapture(index, jI, tI), this)
-                   .map(snd);
+                   .map(utils.snd);
     }
 
     // Iterate through all of the squares on the board to see if there is a
@@ -331,14 +279,14 @@ class Board {
     // Again, there might be room for optimization - we could do this
     // iteratively and exit immediately upon finding a piece that can capture.
     private mustCapture(): boolean {
-        return flatten(
-                enumerate(this.pieces)
-                    .filter(([_, p]) => pieceColor(p) === this.currentState.color, this)
-                    .map(([i, _]) => this.findAllCaptures(i), this)).length !== 0;
+        return utils.flatten(
+                utils.enumerate(this.pieces)
+                     .filter(([_, p]) => pieceColor(p) === this.currentState.color, this)
+                     .map(([i, _]) => this.findAllCaptures(i), this)).length !== 0;
     }
 
     // More inefficient garbage.
-    move(sourceIndex: number, targetIndex: number): Board {
+    move(sourceIndex: number, targetIndex: number): Board | null {
         // We have two choices - it's either a regular turn, or it's a multicapture.
         // Otherwise, the game is over.
         if(this.currentState.isRegularTurn()) {
@@ -360,7 +308,7 @@ class Board {
             // null.
             let captureMoves: [number, number][] = this.captureIndices(sourceIndex);
             if(this.mustCapture() &&
-               captureMoves.map(snd)
+               captureMoves.map(utils.snd)
                            .indexOf(targetIndex) < 0) {
                 return null;
             }
@@ -407,7 +355,7 @@ class Board {
                 return null;
             }
             let captureIndex: number = this.captureIndices(sourceIndex)
-                                           .map(snd)
+                                           .map(utils.snd)
                                            .indexOf(targetIndex);
 
             if(captureIndex < 0) {
@@ -436,6 +384,8 @@ class Board {
             newBoard.currentState = new RegularTurn(otherColor(this.currentState.color));
             return newBoard;
         }
+
+        return null;
     }
 
     private jump(sourceIndex: number, jumpOverIndex: number, targetIndex: number) {
@@ -537,7 +487,7 @@ function rightAdjacent(index: number): boolean {
 
 // Obtaining possible diagonal moves.
 
-function leftUp(index: number): number {
+function leftUp(index: number): number | null {
     if(leftSide(index) || topRow(index)) {
         return null;
     }
@@ -547,7 +497,7 @@ function leftUp(index: number): number {
     return index - 5;
 }
 
-function rightUp(index: number): number {
+function rightUp(index: number): number | null {
     if(rightSide(index) || topRow(index)) {
         return null;
     }
@@ -557,7 +507,7 @@ function rightUp(index: number): number {
     return index - 4;
 }
 
-function leftDown(index: number): number {
+function leftDown(index: number): number | null{
     if(leftSide(index) || bottomRow(index)) {
         return null;
     }
@@ -567,7 +517,7 @@ function leftDown(index: number): number {
     return index + 3;
 }
 
-function rightDown(index: number): number {
+function rightDown(index: number): number | null{
     if(rightSide(index) || bottomRow(index)) {
         return null;
     }
@@ -579,42 +529,42 @@ function rightDown(index: number): number {
 
 // Obtaining possible diagonal captures.
 
-function leftUpCapture(index: number): number {
+function leftUpCapture(index: number): number | null {
     if (leftAdjacent(index) || topAdjacent(index)) {
         return null;
     }
     return index - 9;
 }
 
-function rightUpCapture(index: number): number {
+function rightUpCapture(index: number): number | null {
     if(rightAdjacent(index) || topAdjacent(index)) {
         return null;
     }
     return index - 7;
 }
 
-function leftDownCapture(index: number): number {
+function leftDownCapture(index: number): number | null {
     if (leftAdjacent(index) || bottomAdjacent(index)) {
         return null;
     }
     return index + 7;
 }
 
-function rightDownCapture(index: number): number {
+function rightDownCapture(index: number): number | null {
     if(rightAdjacent(index) || bottomAdjacent(index)) {
         return null;
     }
     return index + 9;
 }
 
-const ALL_MOVES: ((arg: number) => number)[] = [
+const ALL_MOVES: ((arg: number) => number | null)[] = [
     leftDown, leftDownCapture,
     rightDown, rightDownCapture,
     leftUp, leftUpCapture,
     rightUp, rightUpCapture
 ]
 
-function potentialMoveFunctions(piece: Piece): ((arg: number) => number)[] {
+function potentialMoveFunctions(piece: Piece): ((arg: number) => number | null)[] {
     switch(piece) {
         case Piece.NONE: {
             return [];
@@ -647,14 +597,15 @@ function promotableLocation(color: Color, index: number): boolean {
     }
 }
 
-function fromObject(obj: object): Board {
-    let gameStateObj: object = obj["gameState"]
+export function fromObject(obj: utils.GameJSObject): Board {
+    let gameStateObj: utils.GameStateJSObject = obj["gameState"]
     let gameState: GameState;
     switch(gameStateObj["currentState"]) {
         case "RegularTurn":
             gameState = new RegularTurn(gameStateObj["color"]);
             break;
         case "Multicapture":
+            utils.assertIntegerList(gameStateObj["currentIndex"]);
             gameState = new Multicapture(gameStateObj["color"], gameStateObj["currentIndex"]);
             break;
         case "CompleteGame":
