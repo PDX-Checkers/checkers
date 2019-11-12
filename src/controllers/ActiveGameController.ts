@@ -14,17 +14,23 @@ import OOPEventWebSocket = require('ws');
 export class ActiveGameController {
     private games: Map<string, ActiveGame>;
     private userSockets: Map<string, OOPEventWebSocket>;
+    // Convenience variable to take advantage of variable capture in closures.
+    // `this` is ambiguous inside closures, while `self` is not. 
+    // If the word "hate" was engraved on each nanoangstrom of these hundreds of
+    // millions of miles of circuitry, it would not equal one one-billionth of the
+    // hate I feel for Javascript at this microinstant. Hate. Hate.
+    private self: ActiveGameController;
 
     getRoutes(): Router {
         let router = Router();
-        let thisArg: ActiveGameController = this;
-        router.ws('/', wsSubscriber(thisArg));
+        router.ws('/', wsSubscriber(this.self));
         return router;
     }
 
     constructor() {
         this.games = new Map<string, ActiveGame>();
         this.userSockets = new Map<string, OOPEventWebSocket>();
+        this.self = this;
     }
 
     public createGame(playerID: string, ws: WebSocket) {
