@@ -6,8 +6,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start-dev": "nodemon --ignore sessions/ --config \"./util/nodemon.json\"/",
-    "build": "rm -rf ./build/ && tsc && cp -r src/public ./build/",
-    "start": "node build/start.js",
+    "build": "sh ./build.sh",
+    "start": "NODE_ENV=production node build/start.js",
     "debug": "node inspect build/start.js"
   },
   "repository": {
