@@ -12,6 +12,7 @@ import { User } from './models/User';
 import * as bcrypt from 'bcrypt';
 import * as cors from 'cors';
 import * as expressWs from 'express-ws';
+import * as path from 'path';
 import { ActiveGameController } from './controllers/ActiveGameController';
 /* tslint:disable-next-line */
 const FileStore = require('session-file-store')(session);
@@ -106,8 +107,18 @@ class CheckersServer extends Server {
     // Set up endpoints
     this.setupControllers();
 
-    // Set up default page
-    this.app.use(express.static(__dirname + '/public'));
+    // Set up default page based on dev or prod
+    if (process.env.NODE_ENV === 'production') {
+      const dir = path.join(__dirname, 'public/checkers-client/');
+      this.app.set('views', dir);
+      this.app.use(express.static(dir));
+      this.app.get('*', (req, res) => {
+        res.sendFile('index.html', {root: dir});
+      });
+    } else {
+      this.app.get('*', (req, res) => res.send('Server\'s up. Port: ' + port));
+    }
+
 
     // Server actually starts listening for requests
     this.app.listen(port, () => {
