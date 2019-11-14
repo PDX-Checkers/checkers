@@ -33,15 +33,15 @@ export class ActiveGameController {
         this.self = this;
     }
 
-    public createGame(playerID: string, ws: WebSocket) {
+    public createGame(playerID: string, ws: OOPEventWebSocket) {
         let key: string | undefined = undefined;
         while(key === undefined || this.games.has(key)) {
             key = createGameID();
         }
-        this.games.set(key, new ActiveGame(playerID, ws));
+        this.games.set(key, new ActiveGame(this, playerID, ws));
     }
 
-    public joinGame(gameID: string, playerID: string, ws: WebSocket) {
+    public joinGame(gameID: string, playerID: string, ws: OOPEventWebSocket) {
         let g: ActiveGame | undefined = this.games.get(gameID);
         if(g !== undefined) {
             g.join(playerID, ws);
@@ -104,9 +104,8 @@ function wsSubscriber(controller: ActiveGameController): ((ws: OOPEventWebSocket
             }
             // Happy path - subscribes the websocket to the Listener.
             else {
-                ws.on('message', wsListener(controller, ws));
-                ws.on('close', wsCloser(controller, username));
                 controller.addUserSocket(username, ws);
+                subscribe(controller, ws, username);
             }
         }
         else {
@@ -115,6 +114,11 @@ function wsSubscriber(controller: ActiveGameController): ((ws: OOPEventWebSocket
             ws.close();
         }
     }
+}
+
+export function subscribe(controller: ActiveGameController, ws: OOPEventWebSocket, username: string) {
+    ws.on('message', wsListener(controller, ws));
+    ws.on('close', wsCloser(controller, username));
 }
 
 function wsListener(controller: ActiveGameController, ws: OOPEventWebSocket): ((s: string) => void) {

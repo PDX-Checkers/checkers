@@ -1,4 +1,5 @@
 import { Board } from '../BoardClasses/Board'
+import { ActiveGame } from 'src/BoardClasses/ActiveGame';
 
 export abstract class JSONResponse {
     constructor() {}
@@ -66,12 +67,17 @@ export class JSONInvalidMoveResponse extends JSONResponse {
     }
 }
 
-export class JSONBoardStateResponse extends JSONResponse {
-    board: Board;
+export class JSONGameStateResponse extends JSONResponse {
+    redID: string;
+    blackID: string;
+    boardState: Board;
 
-    constructor(board: Board) {
+    constructor(game: ActiveGame) {
         super();
-        this.board = board.copy();
+        let obj: any = game.toObject();
+        this.redID = obj.redID;
+        this.blackID = obj.blackID;
+        this.boardState = obj.boardState.copy();
     }
 
     isBoardState(): boolean {
@@ -81,7 +87,9 @@ export class JSONBoardStateResponse extends JSONResponse {
     toObject(): object {
         return {
             response_type: "board_state",
-            board_state: this.board.toObject()
+            red_id: this.redID,
+            black_id: this.blackID,
+            board_state: this.boardState.toObject()
         };
     }
 }

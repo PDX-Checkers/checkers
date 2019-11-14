@@ -204,7 +204,7 @@ export class Board {
     // There's an opportunity for optimization here: keep a count of pieces, and
     // decrement whenever there is a capture. In the meantime, we just iterate
     // through all 32 spots on the board.
-    private isGameOver(): boolean {
+    public isGameOver(): boolean {
         let [numRed, numBlack] = [0, 0];
         for(let i = 0; i < this.pieces.length; i++) {
             if(pieceColor(this.pieces[i]) == Color.RED) {
@@ -422,6 +422,10 @@ export class Board {
             "gameState" : this.currentState.toObject()
         };
     }
+
+    public finishEarly(color: Color): Board {
+        return new Board(this.pieces, new CompleteGame(otherColor(color)), true);
+    }
 }
 
 // We number the board indices as follows:
@@ -605,8 +609,11 @@ export function fromObject(obj: utils.GameJSObject): Board {
             gameState = new RegularTurn(gameStateObj["color"]);
             break;
         case "Multicapture":
-            utils.assertIntegerList(gameStateObj["currentIndex"]);
-            gameState = new Multicapture(gameStateObj["color"], gameStateObj["currentIndex"]);
+            let currentIndex: number | undefined = gameStateObj["currentIndex"];
+            if(currentIndex === undefined) {
+                throw "fromObject: currentIndex is undefined!";
+            }
+            gameState = new Multicapture(gameStateObj["color"], currentIndex);
             break;
         case "CompleteGame":
             gameState = new CompleteGame(gameStateObj["color"]);
