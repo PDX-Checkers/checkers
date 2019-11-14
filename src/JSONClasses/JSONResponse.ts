@@ -1,5 +1,6 @@
-import { Board } from '../BoardClasses/Board'
-import { ActiveGame } from 'src/BoardClasses/ActiveGame';
+import { Board } from '../BoardClasses/Board';
+import { ActiveGame } from '../BoardClasses/ActiveGame';
+import { ActiveGameController } from '../controllers/ActiveGameController';
 
 export abstract class JSONResponse {
     constructor() {}
@@ -68,16 +69,15 @@ export class JSONInvalidMoveResponse extends JSONResponse {
 }
 
 export class JSONGameStateResponse extends JSONResponse {
-    redID: string;
+    redID?: string;
     blackID: string;
     boardState: Board;
 
     constructor(game: ActiveGame) {
         super();
-        let obj: any = game.toObject();
-        this.redID = obj.redID;
-        this.blackID = obj.blackID;
-        this.boardState = obj.boardState.copy();
+        this.redID = game.redID;
+        this.blackID = game.blackID;
+        this.boardState = game.boardState.copy();
     }
 
     isBoardState(): boolean {
@@ -125,5 +125,16 @@ export class JSONIsNotYourTurnResponse extends JSONResponse {
         return {
             response_type: "not_your_turn"
         };
+    }
+}
+
+export class JSONActiveGames extends JSONResponse {
+    games: Map<string, ActiveGame>;
+    constructor(controller: ActiveGameController) {
+        super();
+        this.games = controller.games;
+    }
+    toObject(): object {
+        return Array.from(this.games.entries()).map(([x, y]) => [x, y.toObject()])
     }
 }

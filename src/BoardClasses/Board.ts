@@ -179,7 +179,7 @@ export class Board {
     constructor(pieces?: Piece[], 
                 currentState: GameState = new RegularTurn(Color.BLACK), 
                 deepcopy: boolean = false) {
-        if(pieces === null) {
+        if(pieces === undefined) {
             this.pieces = defaultBoard();
         }
         else {

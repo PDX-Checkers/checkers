@@ -119,6 +119,7 @@ export class ActiveGame {
 
     subscribe(ws: OOPEventWebSocket, color: Color) {
         let thisArg: ActiveGame = this;
+        ws.removeAllListeners();
         ws.on("message", wsListener(thisArg, ws, color));
         ws.on("close", finishGameEarlyListener(thisArg, color));
     }

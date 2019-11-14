@@ -1,3 +1,7 @@
+import { ActiveGameController } from 'src/controllers/ActiveGameController';
+import { ActiveGame } from 'src/BoardClasses/ActiveGame';
+import { __spreadArrays } from 'tslib';
+
 export abstract class JSONRequest {
     constructor() {}
 

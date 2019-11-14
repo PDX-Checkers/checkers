@@ -1,5 +1,6 @@
 import { Logger } from '@overnightjs/logger';
 import { ActiveGame } from '../BoardClasses/ActiveGame';
+import { JSONActiveGames } from '../JSONClasses/JSONResponse';
 import { DbManager } from '../DbManager'
 import { Router, Request } from 'express';
 import { ParamsDictionary } from 'express-serve-static-core';
@@ -12,7 +13,7 @@ import OOPEventWebSocket = require('ws');
 // Note that the ActiveGame class also deals a lot with websockets.
 
 export class ActiveGameController {
-    private games: Map<string, ActiveGame>;
+    games: Map<string, ActiveGame>;
     private userSockets: Map<string, OOPEventWebSocket>;
     // Convenience variable to take advantage of variable capture in closures.
     // `this` is ambiguous inside closures, while `self` is not. 
@@ -57,9 +58,30 @@ export class ActiveGameController {
 
     // For now, this just echoes a message. In the future, this will be used to
     // process creating games and joining them.
-    processMessage(ws: OOPEventWebSocket, msg: string) {
-        console.log("ayylmao");
-        ws.send(`I got your message: ${msg}`);
+    processMessage(ws: OOPEventWebSocket, username: string, msg: string) {
+        let msgObj: any = JSON.parse(msg)
+        switch(msgObj["request_type"]) {
+            case "get": {
+                Logger.Info(`Giving games to ${username}`);
+                ws.send(JSON.stringify(new JSONActiveGames(this).toObject()));
+                break;
+            }
+            case "create": {
+                Logger.Info(`Creating game for ${username}`);
+                this.createGame(username, ws);
+                break;
+            }
+            case "join" : {
+                let gameID: any = msgObj["game_id"];
+                Logger.Info(`${username} is trying to join ${gameID}`);
+                this.joinGame(gameID, username, ws);
+                break;
+            }
+            default: {
+                Logger.Info(`${username} is sending gibberish`)
+                ws.send("???");
+            }
+        }
     }
 
     public getUserSocket(username: string): OOPEventWebSocket | undefined {
@@ -117,12 +139,13 @@ function wsSubscriber(controller: ActiveGameController): ((ws: OOPEventWebSocket
 }
 
 export function subscribe(controller: ActiveGameController, ws: OOPEventWebSocket, username: string) {
-    ws.on('message', wsListener(controller, ws));
+    ws.removeAllListeners();
+    ws.on('message', wsListener(controller, ws, username));
     ws.on('close', wsCloser(controller, username));
 }
 
-function wsListener(controller: ActiveGameController, ws: OOPEventWebSocket): ((s: string) => void) {
-    return function(s: string) { controller.processMessage(ws, s) };
+function wsListener(controller: ActiveGameController, ws: OOPEventWebSocket, username: string): ((s: string) => void) {
+    return function(s: string) { controller.processMessage(ws, username, s) };
 }
 
 function wsCloser(controller: ActiveGameController, username: string):
