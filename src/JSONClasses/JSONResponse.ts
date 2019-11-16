@@ -1,4 +1,6 @@
-import { Board } from '../BoardClasses/Board'
+import { Board } from '../BoardClasses/Board';
+import { ActiveGame } from '../BoardClasses/ActiveGame';
+import { ActiveGameController } from '../controllers/ActiveGameController';
 
 export abstract class JSONResponse {
     constructor() {}
@@ -66,12 +68,16 @@ export class JSONInvalidMoveResponse extends JSONResponse {
     }
 }
 
-export class JSONBoardStateResponse extends JSONResponse {
-    board: Board;
+export class JSONGameStateResponse extends JSONResponse {
+    redID?: string;
+    blackID: string;
+    boardState: Board;
 
-    constructor(board: Board) {
+    constructor(game: ActiveGame) {
         super();
-        this.board = board.copy();
+        this.redID = game.redID;
+        this.blackID = game.blackID;
+        this.boardState = game.boardState.copy();
     }
 
     isBoardState(): boolean {
@@ -81,7 +87,9 @@ export class JSONBoardStateResponse extends JSONResponse {
     toObject(): object {
         return {
             response_type: "board_state",
-            board_state: this.board.toObject()
+            red_id: this.redID,
+            black_id: this.blackID,
+            board_state: this.boardState.toObject()
         };
     }
 }
@@ -117,5 +125,16 @@ export class JSONIsNotYourTurnResponse extends JSONResponse {
         return {
             response_type: "not_your_turn"
         };
+    }
+}
+
+export class JSONActiveGames extends JSONResponse {
+    games: Map<string, ActiveGame>;
+    constructor(controller: ActiveGameController) {
+        super();
+        this.games = controller.games;
+    }
+    toObject(): object {
+        return Array.from(this.games.entries()).map(([x, y]) => [x, y.toObject()])
     }
 }
