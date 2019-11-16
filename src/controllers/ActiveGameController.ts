@@ -1,6 +1,6 @@
 import { Logger } from '@overnightjs/logger';
 import { ActiveGame } from '../BoardClasses/ActiveGame';
-import { JSONActiveGames } from '../JSONClasses/JSONResponse';
+import { JSONActiveGames, JSONInvalidMessageResponse } from '../JSONClasses/JSONResponse';
 import { DbManager } from '../DbManager'
 import { Router, Request } from 'express';
 import { ParamsDictionary } from 'express-serve-static-core';
@@ -61,6 +61,7 @@ export class ActiveGameController {
         let msgObj: JSONRequest | null = parseMessageJSON(msg);
         if(msgObj === null) {
             Logger.Info(`Got malformed request from ${username}`);
+            ws.send(JSON.stringify(new JSONInvalidMessageResponse("Request was malformed")));
             return;
         }
         if(msgObj.isGetGamesRequest()) {
@@ -84,6 +85,7 @@ export class ActiveGameController {
             return;
         }
         Logger.Info(`${username} sent a valid request, but it's not for the ActiveGameController.`)
+        ws.send(JSON.stringify(new JSONInvalidMessageResponse("Request was valid, but in the wrong scope")));
     }
 
     public getUserSocket(username: string): OOPEventWebSocket | undefined {
