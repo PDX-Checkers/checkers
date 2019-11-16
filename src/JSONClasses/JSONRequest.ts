@@ -11,7 +11,19 @@ export abstract class JSONRequest {
     isMoveRequest(): boolean {
         return false;
     }
+    isGetGamesRequest(): boolean {
+        return false;
+    }
+    isCreateGameRequest(): boolean {
+        return false;
+    }
+    isJoinGameRequest(): boolean {
+        return false;
+    }
     getMove(): [number, number] | null {
+        return null;
+    }
+    getGameID(): string | null {
         return null;
     }
 }
@@ -42,15 +54,80 @@ class JSONMoveRequest extends JSONRequest {
     }
 }
 
+/*
+    isGetGamesRequest(): boolean {
+        return false;
+    }
+    isCreateGameRequest(): boolean {
+        return false;
+    }
+    isJoinGameRequest(): boolean {
+        return false;
+    }
+*/
+
+export class JSONGetGamesRequest extends JSONRequest {
+    constructor() {
+        super();
+    }
+    isGetGamesRequest(): boolean {
+        return true;
+    }
+}
+
+export class JSONCreateGameRequest extends JSONRequest {
+    constructor() {
+        super();
+    }
+    isCreateGameRequest(): boolean {
+        return true;
+    }
+}
+
+export class JSONJoinGameRequest extends JSONRequest {
+    gameID: string;
+    constructor(gameID: string) {
+        super();
+        this.gameID = gameID;
+    }
+
+    isJoinGameRequest(): boolean {
+        return true;
+    }
+
+    getGameID(): string | null {
+        return this.gameID;
+    }
+}
+
+
 export function parseMessageJSON(json: string): JSONRequest | null {
     let parsedObj: any = JSON.parse(json);
-    if(parsedObj?.request_type && parsedObj.request_type === "get_state") {
+    // All parsedObjs must have a request_type property.
+    if(parsedObj?.request_type === undefined) {
+        return null;
+    }
+    if(parsedObj.request_type === "get_state") {
         return new JSONStateRequest();
     }
-    if(parsedObj?.request_type && parsedObj.request_type === "move") {
+    if(parsedObj.request_type === "move") {
         if(Number.isInteger(parsedObj?.move?.source) &&
            Number.isInteger(parsedObj?.move?.target)) {
             return new JSONMoveRequest(parsedObj.move.source, parsedObj.move.target);
+        }
+    }
+    if(parsedObj.request_type === "get_games") {
+        return new JSONGetGamesRequest();
+    }
+    if(parsedObj.request_type === "create_game") {
+        return new JSONCreateGameRequest();
+    }
+    if(parsedObj.request_type === "join_game") {
+        if(typeof parsedObj.gameID === "string") {
+            return new JSONJoinGameRequest(parsedObj.gameID);
+        }
+        else {
+            return null;
         }
     }
     return null;
