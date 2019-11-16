@@ -5,6 +5,7 @@ import { DbManager } from '../DbManager'
 import { Router, Request } from 'express';
 import { ParamsDictionary } from 'express-serve-static-core';
 import OOPEventWebSocket = require('ws');
+import { JSONRequest, parseMessageJSON } from '../JSONClasses/JSONRequest';
 
 // This Controller contains a data structure of games in progress. Each
 // ActiveGame object will contain two websockets, and thus a lot of the
@@ -56,32 +57,33 @@ export class ActiveGameController {
         return Array.from(this.games.keys());
     }
 
-    // For now, this just echoes a message. In the future, this will be used to
-    // process creating games and joining them.
     processMessage(ws: OOPEventWebSocket, username: string, msg: string) {
-        let msgObj: any = JSON.parse(msg)
-        switch(msgObj["request_type"]) {
-            case "get": {
-                Logger.Info(`Giving games to ${username}`);
-                ws.send(JSON.stringify(new JSONActiveGames(this).toObject()));
-                break;
-            }
-            case "create": {
-                Logger.Info(`Creating game for ${username}`);
-                this.createGame(username, ws);
-                break;
-            }
-            case "join" : {
-                let gameID: any = msgObj["game_id"];
-                Logger.Info(`${username} is trying to join ${gameID}`);
-                this.joinGame(gameID, username, ws);
-                break;
-            }
-            default: {
-                Logger.Info(`${username} is sending gibberish`)
-                ws.send("???");
-            }
+        let msgObj: JSONRequest | null = parseMessageJSON(msg);
+        if(msgObj === null) {
+            Logger.Info(`Got malformed request from ${username}`);
+            return;
         }
+        if(msgObj.isGetGamesRequest()) {
+            Logger.Info(`Giving games to ${username}`);
+            ws.send(JSON.stringify(new JSONActiveGames(this).toObject()));
+            return;
+        }
+        if(msgObj.isCreateGameRequest()) {
+            Logger.Info(`Creating game for ${username}`);
+            this.createGame(username, ws);
+            return;
+        }
+        if(msgObj.isJoinGameRequest()) {
+            let gameID: string | null = msgObj.getGameID();
+            if(gameID === null) {
+                Logger.Err("processMessage JoinGameRequest: Something went extremely wrong, gameID is null")
+                return;
+            }
+            Logger.Info(`${username} is trying to join ${gameID}`);
+            this.joinGame(gameID, username, ws);
+            return;
+        }
+        Logger.Info(`${username} sent a valid request, but it's not for the ActiveGameController.`)
     }
 
     public getUserSocket(username: string): OOPEventWebSocket | undefined {
