@@ -150,3 +150,31 @@ export class JSONActiveGames extends JSONResponse {
         return Array.from(this.games.entries()).map(([x, y]) => [x, y.toObject()])
     }
 }
+
+export class JSONCreatedGame extends JSONResponse {
+    private board: Board;
+    constructor(board: Board) {
+        super();
+        this.board = board;
+    }
+    toObject(): object {
+        return {
+            response_type: "created_game",
+            board_state: this.board.toObject()
+        };
+    }
+}
+
+export class JSONJoinedGame extends JSONResponse {
+    private board: Board;
+    constructor(board: Board) {
+        super();
+        this.board = board;
+    }
+    toObject(): object {
+        return {
+            response_type: "joined_game",
+            board_state: this.board.toObject()
+        };
+    }
+}
