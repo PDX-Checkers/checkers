@@ -1,6 +1,11 @@
 import { Logger } from '@overnightjs/logger';
 import { ActiveGame } from '../BoardClasses/ActiveGame';
-import { JSONActiveGames, JSONInvalidMessageResponse } from '../JSONClasses/JSONResponse';
+import { JSONActiveGames, 
+         JSONInvalidMessageResponse, 
+         JSONJoinedRoom,
+         sendResponse, 
+         JSONVeryBadResponse,
+         JSONCouldntFindGame} from '../JSONClasses/JSONResponse';
 import { DbManager } from '../DbManager'
 import { Router, Request } from 'express';
 import { ParamsDictionary } from 'express-serve-static-core';
@@ -49,7 +54,7 @@ export class ActiveGameController {
             g.join(playerID, ws);
         }
         else {
-            ws.send("Unable to find game");
+            sendResponse(ws, new JSONCouldntFindGame(gameID));
         }
     }
 
@@ -61,12 +66,12 @@ export class ActiveGameController {
         let msgObj: JSONRequest | null = parseMessageJSON(msg);
         if(msgObj === null) {
             Logger.Info(`Got malformed request from ${username}`);
-            ws.send(JSON.stringify(new JSONInvalidMessageResponse("Request was malformed")));
+            sendResponse(ws, new JSONInvalidMessageResponse("Request was malformed"));
             return;
         }
         if(msgObj.isGetGamesRequest()) {
             Logger.Info(`Giving games to ${username}`);
-            ws.send(JSON.stringify(new JSONActiveGames(this).toObject()));
+            sendResponse(ws, new JSONActiveGames(this));
             return;
         }
         if(msgObj.isCreateGameRequest()) {
@@ -77,15 +82,15 @@ export class ActiveGameController {
         if(msgObj.isJoinGameRequest()) {
             let gameID: string | null = msgObj.getGameID();
             if(gameID === null) {
-                Logger.Err("processMessage JoinGameRequest: Something went extremely wrong, gameID is null")
+                Logger.Err("processMessage JoinGameRequest: Something went extremely wrong, gameID is null");
                 return;
             }
             Logger.Info(`${username} is trying to join ${gameID}`);
             this.joinGame(gameID, username, ws);
             return;
         }
-        Logger.Info(`${username} sent a valid request, but it's not for the ActiveGameController.`)
-        ws.send(JSON.stringify(new JSONInvalidMessageResponse("Request was valid, but in the wrong scope")));
+        Logger.Info(`${username} sent a valid request, but it's not for the ActiveGameController.`);
+        sendResponse(ws, new JSONInvalidMessageResponse("Request was valid, but in the wrong scope"));
     }
 
     public getUserSocket(username: string): OOPEventWebSocket | undefined {
@@ -125,7 +130,7 @@ function wsSubscriber(controller: ActiveGameController): ((ws: OOPEventWebSocket
             Logger.Info(`Received websocket connection from ${username}`);
             if(controller.getUserSocket(<string>username)) {
                 Logger.Info(`But it's a duplicate...`);
-                ws.send("You already connected!");
+                sendResponse(ws, new JSONVeryBadResponse("You already connected!"));
                 ws.close();
             }
             // Happy path - subscribes the websocket to the Listener.
@@ -136,7 +141,7 @@ function wsSubscriber(controller: ActiveGameController): ((ws: OOPEventWebSocket
         }
         else {
             Logger.Info("Received unauthorized websocket request.");
-            ws.send("You aren't authenticated, fool!");
+            sendResponse(ws, new JSONVeryBadResponse("You aren't authenticated, fool!"));
             ws.close();
         }
     }
@@ -146,6 +151,7 @@ export function subscribe(controller: ActiveGameController, ws: OOPEventWebSocke
     ws.removeAllListeners();
     ws.on('message', wsListener(controller, ws, username));
     ws.on('close', wsCloser(controller, username));
+    sendResponse(ws, new JSONJoinedRoom());
 }
 
 function wsListener(controller: ActiveGameController, ws: OOPEventWebSocket, username: string): ((s: string) => void) {

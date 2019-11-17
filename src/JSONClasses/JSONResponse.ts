@@ -1,6 +1,7 @@
 import { Board } from '../BoardClasses/Board';
 import { ActiveGame } from '../BoardClasses/ActiveGame';
 import { ActiveGameController } from '../controllers/ActiveGameController';
+import OOPEventWebSocket = require('ws');
 
 export abstract class JSONResponse {
     constructor() {}
@@ -34,10 +35,12 @@ export abstract class JSONResponse {
 
 export class JSONInvalidMessageResponse extends JSONResponse {
     message: string;
+    board_state ?: Board;
 
-    constructor(message: string) {
+    constructor(message: string, board_state?: Board) {
         super();
         this.message = message;
+        this.board_state = board_state;
     }
 
     isInvalidMessage(): boolean {
@@ -45,16 +48,36 @@ export class JSONInvalidMessageResponse extends JSONResponse {
     }
 
     toObject(): object {
+        let obj: any = {};
+        obj.response_type = "invalid_message";
+        if(this.board_state !== undefined) {
+            obj.board_state = this.board_state.toObject();
+        }
+        return obj;
+    }
+}
+
+export class JSONVeryBadResponse extends JSONResponse {
+    message: string;
+
+    constructor(message: string) {
+        super();
+        this.message = message;
+    }
+
+    toObject(): object {
         return {
-            response_type: "invalid_message",
+            response_type: "very_bad_response",
             message: this.message
         };
     }
 }
 
 export class JSONInvalidMoveResponse extends JSONResponse {
-    constructor() {
+    private board: Board;
+    constructor(board: Board) {
         super();
+        this.board = board;
     }
 
     isInvalidMove(): boolean {
@@ -63,8 +86,9 @@ export class JSONInvalidMoveResponse extends JSONResponse {
 
     toObject(): object {
         return {
-            response_type: "invalid_move"
-        }
+            response_type: "invalid_move",
+            board_state: this.board.toObject()
+        };
     }
 }
 
@@ -115,7 +139,11 @@ export class JSONValidMoveResponse extends JSONResponse {
 }
 
 export class JSONIsNotYourTurnResponse extends JSONResponse {
-    constructor() { super(); }
+    private board: Board;
+    constructor(board: Board) { 
+        super(); 
+        this.board = board;
+    }
 
     isNotYourTurn(): boolean {
         return true;
@@ -123,7 +151,8 @@ export class JSONIsNotYourTurnResponse extends JSONResponse {
 
     toObject(): object {
         return {
-            response_type: "not_your_turn"
+            response_type: "not_your_turn",
+            board_state: this.board.toObject()
         };
     }
 }
@@ -135,6 +164,67 @@ export class JSONActiveGames extends JSONResponse {
         this.games = controller.games;
     }
     toObject(): object {
-        return Array.from(this.games.entries()).map(([x, y]) => [x, y.toObject()])
+        return {
+            response_type: "active_games",
+            games: Array.from(this.games.entries()).map(([x, y]) => [x, y.toObject()])
+        };
     }
+}
+
+export class JSONCreatedGame extends JSONResponse {
+    private board: Board;
+    constructor(board: Board) {
+        super();
+        this.board = board;
+    }
+    toObject(): object {
+        return {
+            response_type: "created_game",
+            board_state: this.board.toObject()
+        };
+    }
+}
+
+export class JSONJoinedGame extends JSONResponse {
+    private board: Board;
+    constructor(board: Board) {
+        super();
+        this.board = board;
+    }
+    toObject(): object {
+        return {
+            response_type: "joined_game",
+            board_state: this.board.toObject()
+        };
+    }
+}
+
+export class JSONCouldntFindGame extends JSONResponse {
+    gameID: string;
+    constructor(gameID: string) {
+        super();
+        this.gameID = gameID;
+    }
+
+    toObject(): object {
+        return {
+            response_type: "couldnt_find_game",
+            game_id: this.gameID
+        };
+    }
+}
+
+export class JSONJoinedRoom extends JSONResponse {
+    constructor() {
+        super();
+    }
+    toObject(): object {
+        return {
+            response_type: "joined_room"
+        };
+    }
+}
+
+export function sendResponse(ws: OOPEventWebSocket, response: JSONResponse) {
+    ws.send(response.toJSON());
 }

@@ -4,7 +4,12 @@ import { JSONInvalidMessageResponse,
          JSONGameStateResponse,
          JSONIsNotYourTurnResponse,
          JSONInvalidMoveResponse,
-         JSONValidMoveResponse } from '../JSONClasses/JSONResponse';
+         JSONValidMoveResponse, 
+         JSONResponse,
+         JSONJoinedGame,
+         JSONCreatedGame,
+         sendResponse,
+         JSONVeryBadResponse} from '../JSONClasses/JSONResponse';
 import OOPEventWebSocket = require('ws');
 import { ActiveGameController, subscribe } from '../controllers/ActiveGameController';
 import { Logger } from '@overnightjs/logger';
@@ -30,7 +35,7 @@ export class ActiveGame {
         else {
             this.boardState = board.copy();
         }
-        blackSocket.send("Created Game");
+        sendResponse(this.blackSocket, new JSONCreatedGame(this.boardState));
         this.subscribe(blackSocket, Color.BLACK);
     }
 
@@ -41,15 +46,15 @@ export class ActiveGame {
         this.redID = redID;
         this.redSocket = redSocket;
         this.subscribe(redSocket, Color.RED);
-        this.sendBoth("joined game");
+        this.sendBoth(new JSONJoinedGame(this.boardState));
     }
 
-    private sendBoth(message: string) {
+    private sendBoth(message: JSONResponse) {
         if(this.redSocket === undefined) {
             throw "sendBoth: sending both when redSocket is undefined!";
         }
-        this.blackSocket.send(message);
-        this.redSocket.send(message);
+        sendResponse(this.blackSocket, message);
+        sendResponse(this.redSocket, message);
     }
 
     private getSocketColor(socket: OOPEventWebSocket): Color {
@@ -75,41 +80,33 @@ export class ActiveGame {
         // for the state of the board, or a move request.
         let parsedObj: JSONRequest | null = parseMessageJSON(message);
         if(parsedObj === null) {
-            socket.send(
-                JSON.stringify(
-                    new JSONInvalidMessageResponse("Invalid object").toObject()));
+            sendResponse(socket, new JSONInvalidMessageResponse("Invalid object", this.boardState));
             return;
         }
         if(parsedObj.isStateRequest()) {
-            socket.send(JSON.stringify(new JSONGameStateResponse(this).toObject()));
+            sendResponse(socket, new JSONGameStateResponse(this));
             return;
         }
         // If it's not invalid and it's not a state request, it's a move request.
         else {
             if(this.getSocketColor(socket) !== this.boardState.getCurrentState().color) {
-                socket.send(
-                    JSON.stringify(
-                        new JSONIsNotYourTurnResponse().toObject()));
+                sendResponse(socket, new JSONIsNotYourTurnResponse(this.boardState));
                 return;
             }
             let move: [number, number] | null = parsedObj.getMove();
             if(move === null) {
-                socket.send("Something went very, very wrong.");
+                sendResponse(socket, new JSONVeryBadResponse("Move is null???"));
                 return;
             }
             let [source, target]: [number, number] = move;
             let newBoard: Board | null = this.boardState.move(source, target);
             if(newBoard === null) {
-                socket.send(
-                    JSON.stringify(
-                        new JSONInvalidMoveResponse().toObject()));
+                sendResponse(socket, new JSONInvalidMoveResponse(this.boardState));
                 return;
             }
 
             this.boardState = newBoard;
-            this.sendBoth(
-                JSON.stringify(
-                    new JSONValidMoveResponse(this.boardState).toObject()));
+            this.sendBoth(new JSONValidMoveResponse(this.boardState));
 
             if(this.boardState.isGameOver()) {
                 this.finishGame();
@@ -128,14 +125,12 @@ export class ActiveGame {
     finishGame() {
         Logger.Info(`Finished Game: ${this.toObject()}`);
         if(isOpen(this.blackSocket)) {
-            this.blackSocket.send("Returning to ActiveGameController");
             subscribe(this.parent, this.blackSocket, this.blackID);
         }
         else {
             this.parent.removeUserSocket(this.blackID);
         }
         if(this.redSocket !== undefined && this.redID !== undefined && isOpen(this.redSocket)) {
-            this.blackSocket.send("Returning to ActiveGameController");
             subscribe(this.parent, this.redSocket, this.redID);
         }
     }
