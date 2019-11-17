@@ -34,10 +34,12 @@ export abstract class JSONResponse {
 
 export class JSONInvalidMessageResponse extends JSONResponse {
     message: string;
+    board_state ?: Board;
 
-    constructor(message: string) {
+    constructor(message: string, board_state?: Board) {
         super();
         this.message = message;
+        this.board_state = board_state;
     }
 
     isInvalidMessage(): boolean {
@@ -45,10 +47,12 @@ export class JSONInvalidMessageResponse extends JSONResponse {
     }
 
     toObject(): object {
-        return {
-            response_type: "invalid_message",
-            message: this.message
-        };
+        let obj: any = {};
+        obj.response_type = "invalid_message";
+        if(this.board_state !== undefined) {
+            obj.board_state = this.board_state.toObject();
+        }
+        return obj;
     }
 }
 
