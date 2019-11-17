@@ -54,18 +54,6 @@ class JSONMoveRequest extends JSONRequest {
     }
 }
 
-/*
-    isGetGamesRequest(): boolean {
-        return false;
-    }
-    isCreateGameRequest(): boolean {
-        return false;
-    }
-    isJoinGameRequest(): boolean {
-        return false;
-    }
-*/
-
 export class JSONGetGamesRequest extends JSONRequest {
     constructor() {
         super();
