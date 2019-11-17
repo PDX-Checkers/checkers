@@ -8,7 +8,8 @@ import { JSONInvalidMessageResponse,
          JSONResponse,
          JSONJoinedGame,
          JSONCreatedGame,
-         sendResponse} from '../JSONClasses/JSONResponse';
+         sendResponse,
+         JSONVeryBadResponse} from '../JSONClasses/JSONResponse';
 import OOPEventWebSocket = require('ws');
 import { ActiveGameController, subscribe } from '../controllers/ActiveGameController';
 import { Logger } from '@overnightjs/logger';
@@ -94,7 +95,7 @@ export class ActiveGame {
             }
             let move: [number, number] | null = parsedObj.getMove();
             if(move === null) {
-                socket.send("Something went very, very wrong.");
+                sendResponse(socket, new JSONVeryBadResponse("Move is null???"));
                 return;
             }
             let [source, target]: [number, number] = move;
@@ -124,14 +125,12 @@ export class ActiveGame {
     finishGame() {
         Logger.Info(`Finished Game: ${this.toObject()}`);
         if(isOpen(this.blackSocket)) {
-            this.blackSocket.send("Returning to ActiveGameController");
             subscribe(this.parent, this.blackSocket, this.blackID);
         }
         else {
             this.parent.removeUserSocket(this.blackID);
         }
         if(this.redSocket !== undefined && this.redID !== undefined && isOpen(this.redSocket)) {
-            this.blackSocket.send("Returning to ActiveGameController");
             subscribe(this.parent, this.redSocket, this.redID);
         }
     }
