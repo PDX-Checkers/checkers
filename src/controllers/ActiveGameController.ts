@@ -1,6 +1,8 @@
 import { Logger } from '@overnightjs/logger';
 import { ActiveGame } from '../BoardClasses/ActiveGame';
-import { JSONActiveGames, JSONInvalidMessageResponse } from '../JSONClasses/JSONResponse';
+import { JSONActiveGames, 
+         JSONInvalidMessageResponse, 
+         sendResponse } from '../JSONClasses/JSONResponse';
 import { DbManager } from '../DbManager'
 import { Router, Request } from 'express';
 import { ParamsDictionary } from 'express-serve-static-core';
@@ -61,12 +63,12 @@ export class ActiveGameController {
         let msgObj: JSONRequest | null = parseMessageJSON(msg);
         if(msgObj === null) {
             Logger.Info(`Got malformed request from ${username}`);
-            ws.send(JSON.stringify(new JSONInvalidMessageResponse("Request was malformed")));
+            sendResponse(ws, new JSONInvalidMessageResponse("Request was malformed"));
             return;
         }
         if(msgObj.isGetGamesRequest()) {
             Logger.Info(`Giving games to ${username}`);
-            ws.send(JSON.stringify(new JSONActiveGames(this).toObject()));
+            sendResponse(ws, new JSONActiveGames(this));
             return;
         }
         if(msgObj.isCreateGameRequest()) {
@@ -77,15 +79,15 @@ export class ActiveGameController {
         if(msgObj.isJoinGameRequest()) {
             let gameID: string | null = msgObj.getGameID();
             if(gameID === null) {
-                Logger.Err("processMessage JoinGameRequest: Something went extremely wrong, gameID is null")
+                Logger.Err("processMessage JoinGameRequest: Something went extremely wrong, gameID is null");
                 return;
             }
             Logger.Info(`${username} is trying to join ${gameID}`);
             this.joinGame(gameID, username, ws);
             return;
         }
-        Logger.Info(`${username} sent a valid request, but it's not for the ActiveGameController.`)
-        ws.send(JSON.stringify(new JSONInvalidMessageResponse("Request was valid, but in the wrong scope")));
+        Logger.Info(`${username} sent a valid request, but it's not for the ActiveGameController.`);
+        sendResponse(ws, new JSONInvalidMessageResponse("Request was valid, but in the wrong scope"));
     }
 
     public getUserSocket(username: string): OOPEventWebSocket | undefined {
