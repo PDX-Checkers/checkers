@@ -20,11 +20,13 @@ export class ActiveGame {
     blackSocket: OOPEventWebSocket;
     redSocket?: OOPEventWebSocket;
     boardState: Board;
+    gameID: string;
     parent: ActiveGameController;
 
     // The Black player creates the game. The Red player joins the game.
-    constructor(parent: ActiveGameController, blackID: string, blackSocket: OOPEventWebSocket, redID?: string, redSocket?: OOPEventWebSocket, board?: Board) {
+    constructor(parent: ActiveGameController, gameID: string, blackID: string, blackSocket: OOPEventWebSocket, redID?: string, redSocket?: OOPEventWebSocket, board?: Board) {
         this.parent = parent;
+        this.gameID = gameID;
         this.blackID = blackID;
         this.redID = redID;
         this.blackSocket = blackSocket;
@@ -133,6 +135,7 @@ export class ActiveGame {
         if(this.redSocket !== undefined && this.redID !== undefined && isOpen(this.redSocket)) {
             subscribe(this.parent, this.redSocket, this.redID);
         }
+        this.parent.removeGame(this.gameID);
     }
 
     finishGameEarly(color: Color) {
