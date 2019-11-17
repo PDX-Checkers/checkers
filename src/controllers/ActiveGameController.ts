@@ -45,7 +45,7 @@ export class ActiveGameController {
         while(key === undefined || this.games.has(key)) {
             key = createGameID();
         }
-        this.games.set(key, new ActiveGame(this, playerID, ws));
+        this.games.set(key, new ActiveGame(this, key, playerID, ws));
     }
 
     public joinGame(gameID: string, playerID: string, ws: OOPEventWebSocket) {
@@ -103,6 +103,10 @@ export class ActiveGameController {
 
     public removeUserSocket(username: string): void {
         this.userSockets.delete(username);
+    }
+
+    public removeGame(userID: string) {
+        this.games.delete(userID);
     }
 }
 
