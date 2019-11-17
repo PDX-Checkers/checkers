@@ -83,7 +83,7 @@ export class ActiveGame {
             return;
         }
         if(parsedObj.isStateRequest()) {
-            socket.send(JSON.stringify(new JSONGameStateResponse(this).toObject()));
+            sendResponse(socket, new JSONGameStateResponse(this));
             return;
         }
         // If it's not invalid and it's not a state request, it's a move request.
