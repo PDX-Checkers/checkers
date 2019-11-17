@@ -181,5 +181,5 @@ export class JSONJoinedGame extends JSONResponse {
 }
 
 export function sendResponse(ws: OOPEventWebSocket, response: JSONResponse) {
-    ws.send(JSON.stringify(response.toObject()));
+    ws.send(response.toJSON());
 }
