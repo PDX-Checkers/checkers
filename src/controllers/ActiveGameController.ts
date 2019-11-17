@@ -3,7 +3,9 @@ import { ActiveGame } from '../BoardClasses/ActiveGame';
 import { JSONActiveGames, 
          JSONInvalidMessageResponse, 
          JSONJoinedRoom,
-         sendResponse } from '../JSONClasses/JSONResponse';
+         sendResponse, 
+         JSONVeryBadResponse,
+         JSONCouldntFindGame} from '../JSONClasses/JSONResponse';
 import { DbManager } from '../DbManager'
 import { Router, Request } from 'express';
 import { ParamsDictionary } from 'express-serve-static-core';
@@ -52,7 +54,7 @@ export class ActiveGameController {
             g.join(playerID, ws);
         }
         else {
-            ws.send("Unable to find game");
+            sendResponse(ws, new JSONCouldntFindGame(gameID));
         }
     }
 
@@ -128,7 +130,7 @@ function wsSubscriber(controller: ActiveGameController): ((ws: OOPEventWebSocket
             Logger.Info(`Received websocket connection from ${username}`);
             if(controller.getUserSocket(<string>username)) {
                 Logger.Info(`But it's a duplicate...`);
-                ws.send("You already connected!");
+                sendResponse(ws, new JSONVeryBadResponse("You already connected!"));
                 ws.close();
             }
             // Happy path - subscribes the websocket to the Listener.
@@ -139,7 +141,7 @@ function wsSubscriber(controller: ActiveGameController): ((ws: OOPEventWebSocket
         }
         else {
             Logger.Info("Received unauthorized websocket request.");
-            ws.send("You aren't authenticated, fool!");
+            sendResponse(ws, new JSONVeryBadResponse("You aren't authenticated, fool!"));
             ws.close();
         }
     }

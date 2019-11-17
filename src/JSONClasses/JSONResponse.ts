@@ -57,6 +57,22 @@ export class JSONInvalidMessageResponse extends JSONResponse {
     }
 }
 
+export class JSONVeryBadResponse extends JSONResponse {
+    message: string;
+
+    constructor(message: string) {
+        super();
+        this.message = message;
+    }
+
+    toObject(): object {
+        return {
+            response_type: "very_bad_response",
+            message: this.message
+        };
+    }
+}
+
 export class JSONInvalidMoveResponse extends JSONResponse {
     private board: Board;
     constructor(board: Board) {
@@ -179,6 +195,21 @@ export class JSONJoinedGame extends JSONResponse {
         return {
             response_type: "joined_game",
             board_state: this.board.toObject()
+        };
+    }
+}
+
+export class JSONCouldntFindGame extends JSONResponse {
+    gameID: string;
+    constructor(gameID: string) {
+        super();
+        this.gameID = gameID;
+    }
+
+    toObject(): object {
+        return {
+            response_type: "couldnt_find_game",
+            game_id: this.gameID
         };
     }
 }
