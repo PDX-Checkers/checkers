@@ -1,0 +1,27 @@
+.width-container {
+  display: inline-block;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(8, 80px);
+  grid-template-rows: repeat(8, 80px);
+  column-gap: 0;
+  background-color: goldenrod;
+}
+
+.red-square {
+  background-color: red;
+}
+
+.black-square {
+  background-color: black
+}
+
+.square {
+  margin: 1px;
+  grid-column: var(--column);
+  grid-row: var(--row);
+}
+
+

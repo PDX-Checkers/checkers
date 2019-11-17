@@ -2,7 +2,9 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import './index.css';
 import App from './App';
+import Board from './components/board/Board'
 import * as serviceWorker from './serviceWorker';
+ReactDOM.render(<Board />, document.getElementById('board-container'))
 
 ReactDOM.render(<App />, document.getElementById('root'));
 
