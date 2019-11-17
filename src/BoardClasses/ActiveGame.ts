@@ -7,7 +7,8 @@ import { JSONInvalidMessageResponse,
          JSONValidMoveResponse, 
          JSONResponse,
          JSONJoinedGame,
-         JSONCreatedGame} from '../JSONClasses/JSONResponse';
+         JSONCreatedGame,
+         sendResponse} from '../JSONClasses/JSONResponse';
 import OOPEventWebSocket = require('ws');
 import { ActiveGameController, subscribe } from '../controllers/ActiveGameController';
 import { Logger } from '@overnightjs/logger';
@@ -154,8 +155,4 @@ function wsListener(game: ActiveGame, ws: OOPEventWebSocket, color: Color): ((s:
 
 function isOpen(socket: OOPEventWebSocket) {
     return socket.readyState === 1;
-}
-
-function sendResponse(ws: OOPEventWebSocket, response: JSONResponse) {
-    ws.send(JSON.stringify(response.toObject()));
 }

@@ -1,6 +1,7 @@
 import { Board } from '../BoardClasses/Board';
 import { ActiveGame } from '../BoardClasses/ActiveGame';
 import { ActiveGameController } from '../controllers/ActiveGameController';
+import OOPEventWebSocket = require('ws');
 
 export abstract class JSONResponse {
     constructor() {}
@@ -177,4 +178,8 @@ export class JSONJoinedGame extends JSONResponse {
             board_state: this.board.toObject()
         };
     }
+}
+
+export function sendResponse(ws: OOPEventWebSocket, response: JSONResponse) {
+    ws.send(JSON.stringify(response.toObject()));
 }
