@@ -183,6 +183,17 @@ export class JSONJoinedGame extends JSONResponse {
     }
 }
 
+export class JSONJoinedRoom extends JSONResponse {
+    constructor() {
+        super();
+    }
+    toObject(): object {
+        return {
+            response_type: "joined_room"
+        };
+    }
+}
+
 export function sendResponse(ws: OOPEventWebSocket, response: JSONResponse) {
     ws.send(response.toJSON());
 }

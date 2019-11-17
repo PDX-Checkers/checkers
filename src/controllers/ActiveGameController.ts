@@ -2,6 +2,7 @@ import { Logger } from '@overnightjs/logger';
 import { ActiveGame } from '../BoardClasses/ActiveGame';
 import { JSONActiveGames, 
          JSONInvalidMessageResponse, 
+         JSONJoinedRoom,
          sendResponse } from '../JSONClasses/JSONResponse';
 import { DbManager } from '../DbManager'
 import { Router, Request } from 'express';
@@ -148,6 +149,7 @@ export function subscribe(controller: ActiveGameController, ws: OOPEventWebSocke
     ws.removeAllListeners();
     ws.on('message', wsListener(controller, ws, username));
     ws.on('close', wsCloser(controller, username));
+    sendResponse(ws, new JSONJoinedRoom());
 }
 
 function wsListener(controller: ActiveGameController, ws: OOPEventWebSocket, username: string): ((s: string) => void) {
