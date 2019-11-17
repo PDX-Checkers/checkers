@@ -57,8 +57,10 @@ export class JSONInvalidMessageResponse extends JSONResponse {
 }
 
 export class JSONInvalidMoveResponse extends JSONResponse {
-    constructor() {
+    private board: Board;
+    constructor(board: Board) {
         super();
+        this.board = board;
     }
 
     isInvalidMove(): boolean {
@@ -67,8 +69,9 @@ export class JSONInvalidMoveResponse extends JSONResponse {
 
     toObject(): object {
         return {
-            response_type: "invalid_move"
-        }
+            response_type: "invalid_move",
+            board_state: this.board.toObject()
+        };
     }
 }
 
@@ -119,7 +122,11 @@ export class JSONValidMoveResponse extends JSONResponse {
 }
 
 export class JSONIsNotYourTurnResponse extends JSONResponse {
-    constructor() { super(); }
+    private board: Board;
+    constructor(board: Board) { 
+        super(); 
+        this.board = board;
+    }
 
     isNotYourTurn(): boolean {
         return true;
@@ -127,7 +134,8 @@ export class JSONIsNotYourTurnResponse extends JSONResponse {
 
     toObject(): object {
         return {
-            response_type: "not_your_turn"
+            response_type: "not_your_turn",
+            board_state: this.board.toObject()
         };
     }
 }
