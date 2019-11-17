@@ -148,7 +148,10 @@ export class JSONActiveGames extends JSONResponse {
         this.games = controller.games;
     }
     toObject(): object {
-        return Array.from(this.games.entries()).map(([x, y]) => [x, y.toObject()])
+        return {
+            response_type: "active_games",
+            games: Array.from(this.games.entries()).map(([x, y]) => [x, y.toObject()])
+        };
     }
 }
 
