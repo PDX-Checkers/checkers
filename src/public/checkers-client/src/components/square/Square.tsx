@@ -23,26 +23,12 @@ class Square extends React.Component<{index: number}> {
      return lastColor;
   }
 
-  drop(event: any) {
-    event.preventDefault();
-    const data = event.dataTransfer.getData('text');
-    event.target.appendChild(document.getElementById(data));
-  }
-
-  allowDrop(event: any) {
-    event.preventDefault();
-  }
-
   render(): any {
     let squareClasses = this.calculateColor(this.props.index);
     squareClasses += ' square'
     const coordinates = calculateCoordinatesFromFullIndex(this.props.index);
-    const drop = this.drop;
-    const dragover = this.allowDrop;
 
-    return lastColor === redSquare ? 
-    <div className={squareClasses} style={coordinates} onDrop={drop} onDragOver={dragover}></div> :
-    <div className={squareClasses} style={coordinates}></div>;
+    return <div className={squareClasses} style={coordinates}></div>
   }
 }
 
