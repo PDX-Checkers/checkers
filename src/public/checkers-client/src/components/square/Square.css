@@ -1,0 +1,13 @@
+.red-square {
+  background-color: red;
+}
+
+.black-square {
+  background-color: black
+}
+
+.square {
+  margin: 1px;
+  grid-column: var(--column);
+  grid-row: var(--row);
+}

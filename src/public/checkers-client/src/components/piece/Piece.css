@@ -1,0 +1,18 @@
+.piece {
+  border-radius: 50%;
+  width: 78px;
+  height: 78px;
+  border: 1px solid white;
+}
+
+.red-piece {
+  grid-column: var(--column);
+  grid-row: var(--row);
+  background: red;
+}
+
+.black-piece {
+  grid-column: var(--column);
+  grid-row: var(--row);
+  background: black;
+}
