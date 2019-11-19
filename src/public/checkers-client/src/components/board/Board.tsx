@@ -2,45 +2,71 @@ import React from 'react';
 import './Board.css';
 import Piece from '../piece/Piece';
 import Square from '../square/Square';
-import {range} from '../../helpers/HelperFunctions'
+import { GameBoard, fromObject } from '../../helpers/GameBoard';
+import { WebsocketManager } from '../../websocketManager'
 
+export enum PlayerColor {
+  RED,
+  BLACK,
+  NOT_SET
+}
 
-class Board extends React.Component<{}> {
+const board = new GameBoard();
+
+class Board extends React.Component<{
+  playerColor: PlayerColor,
+  boardState: any,
+  updateGameCallback: (boardState: any, playerColor: PlayerColor) => (void)}> {
+
+  constructor(props: any) {
+    super(props);
+
+    this.handleGameResponses = this.handleGameResponses.bind(this);
+  }
+
+  private handleGameResponses(event: any) {
+    const response: any = JSON.parse(event.data);
+  }
 
   render(): any {
-    const squares: any  = [];
-    for (let i:number = 0; i< 64; i++) {
-      const square = <Square key={i} index={i}></Square>
-      squares.push(square)
-    }
+    let board: any = <div></div>;
+    if (this.props.boardState) {
+    // if (true){
+      const gameBoard: GameBoard = fromObject(this.props.boardState);
 
-    const redPieces: any = [];
-    const blackPieces: any = [];
+      WebsocketManager.setOnMessage(this.handleGameResponses);
 
-    const blackRange: number[] = range(0, 12);
-    const redRange: number[] = range(20,32); 
+      const squares: any  = [];
+      for (let i:number = 0; i< 64; i++) {
+        const square = <Square key={i} index={i}></Square>
+        squares.push(square)
+      }
 
-    for (let i:number = 0; i < blackRange.length; i++) {
-      const index = blackRange[i];
-      const piece = <Piece key={i} index={index} black={true} ></Piece>;
-      blackPieces.push(piece);
-    }
+      const rawPieces: any[] = this.props.boardState.board;
+      // const rawPieces = [3,3,3,3,3,3,3,3,3,3,3,3,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1];
 
-    for (let i:number = 0; i < redRange.length; i++) {
-      const index = redRange[i]; 
-      const piece = <Piece key={i} black={false} index={index}></Piece>
-      redPieces.push(piece)
-    }
+      const pieces: any[] = [];
 
-    return <div className='text-center' >
+      for (let i:number = 0; i < rawPieces.length; i++) {
+        if (rawPieces[i] === 0) {
+          continue;
+        }
+        const black: boolean = rawPieces[i] > 2;
+        const king: boolean = rawPieces[i] % 2 === 0
+        const piece = <Piece key={i} index={i} black={black} king={king}></Piece>;
+        pieces.push(piece);
+      }
+
+      board = <div className='text-center' hidden={false}>
       <div className='width-container'>
         <div className='grid border border-dark '>
           {squares}
-          {blackPieces}
-          {redPieces}
+          {pieces}
         </div>
-      </div> 
+      </div>
     </div>
+    }
+    return board;
   }
 }
 

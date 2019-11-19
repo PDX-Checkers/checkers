@@ -20,3 +20,11 @@ export function calculateCoordinatesFromShortIndex(index: number): any {
   }
   return calculateCoordinatesFromFullIndex(fullIndex);
 }
+
+export function isLoggedIn(): boolean {
+  const loggedIn = sessionStorage.getItem('loggedIn');
+  if (loggedIn === 'true') {
+    return true;
+  }
+  return false;
+}

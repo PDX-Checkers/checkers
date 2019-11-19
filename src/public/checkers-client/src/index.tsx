@@ -1,10 +1,14 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import './index.css';
-import App from './App';
-import Board from './components/board/Board'
 import * as serviceWorker from './serviceWorker';
-ReactDOM.render(<Board />, document.getElementById('board-container'))
+import { isLoggedIn } from './helpers/HelperFunctions';
+import { WebsocketManager } from './websocketManager';
+import App from './components/app/App';
+
+if (isLoggedIn()) {
+  WebsocketManager.connect();
+}
 
 ReactDOM.render(<App />, document.getElementById('root'));
 
