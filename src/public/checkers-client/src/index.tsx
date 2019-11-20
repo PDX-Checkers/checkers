@@ -1,8 +1,14 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import './index.css';
-import App from './App';
 import * as serviceWorker from './serviceWorker';
+import { isLoggedIn } from './helpers/HelperFunctions';
+import { WebsocketManager } from './websocketManager';
+import App from './components/app/App';
+
+if (isLoggedIn()) {
+  WebsocketManager.connect();
+}
 
 ReactDOM.render(<App />, document.getElementById('root'));
 

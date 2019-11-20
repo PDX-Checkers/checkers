@@ -1,0 +1,11 @@
+.width-container {
+  display: inline-block;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(8, 80px);
+  grid-template-rows: repeat(8, 80px);
+  column-gap: 0;
+  background-color: goldenrod;
+}
