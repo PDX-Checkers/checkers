@@ -11,3 +11,10 @@
   grid-column: var(--column);
   grid-row: var(--row);
 }
+
+.potential {
+  /*
+    Re-add this when highlighting figured out 
+    background-color: yellow !important; 
+  */
+}

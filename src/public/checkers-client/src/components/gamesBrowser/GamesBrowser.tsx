@@ -5,7 +5,8 @@ import { PlayerColor } from '../board/Board';
 
 class GamesBrowser extends React.Component<{
   gameStartedCallback: (boardState: any, playerColor: PlayerColor) => void,
-  loggedIn: boolean},
+  loggedIn: boolean,
+  gameInProgress: boolean},
   {inGame: boolean,
    games: any[]}> {
 
@@ -15,20 +16,22 @@ class GamesBrowser extends React.Component<{
     this.handleLobbyResponses = this.handleLobbyResponses.bind(this);
 
     this.state = {
-      inGame: false,
-      games: []
+      games: [],
+      inGame: false
     }
   }
 
   private handleLobbyResponses(event: any) {
     const response: any = JSON.parse(event.data);
     if (response.response_type === 'created_game') {
-      WebsocketManager.setOnMessage(this.handleLobbyResponses);
       this.setState({inGame: true});
     } else if (response.response_type === 'joined_game') {
       this.props.gameStartedCallback(
         response.board_state, this.state.inGame ? PlayerColor.BLACK : PlayerColor.RED);
-      this.setState({inGame: true});
+      this.setState({
+        games: [],
+        inGame: false
+      })
     } else if (response.response_type === 'active_games') {
       this.setState({
         games: response.games
@@ -66,14 +69,14 @@ class GamesBrowser extends React.Component<{
     WebsocketManager.sendMessage({request_type: 'get_games'});
   }
 
-  private registerWebsocketHandler() {
-    WebsocketManager.setOnMessage(this.handleLobbyResponses);
-  }
-
   render() {
+    if (this.props.gameInProgress) {
+      return <div></div>
+    }
+
     let games;
     if (this.props.loggedIn) {
-      this.registerWebsocketHandler();
+      WebsocketManager.setOnMessage(this.handleLobbyResponses);
       if (this.state.games.length !== 0) {
         games = this.getElementsFromGames();
       }

@@ -6,7 +6,11 @@ const blackSquare = 'black-square';
 const redSquare = 'red-square';
 let lastColor: string = blackSquare;
 
-class Square extends React.Component<{index: number}> {
+class Square extends React.Component<
+  {index: number,
+   potential: boolean,
+   moveHandler: (longIndex: number) => void}> {
+
   nextColor(color: string): string {
     if (color === blackSquare) {
       return redSquare;
@@ -25,10 +29,14 @@ class Square extends React.Component<{index: number}> {
 
   render(): any {
     let squareClasses = this.calculateColor(this.props.index);
-    squareClasses += ' square'
+    squareClasses += ' square';
+    if (this.props.potential) {
+      squareClasses += ' potential';
+    }
     const coordinates = calculateCoordinatesFromFullIndex(this.props.index);
 
-    return <div className={squareClasses} style={coordinates}></div>
+    return <div className={squareClasses} style={coordinates}
+     onClick={() => this.props.moveHandler(this.props.index)}></div>
   }
 }
 

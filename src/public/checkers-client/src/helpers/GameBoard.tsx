@@ -1,4 +1,5 @@
 import * as utils from './Utils'
+import { number } from 'prop-types';
 
 export enum Color {
     NO_COLOR,
@@ -201,6 +202,10 @@ export class GameBoard {
         return this.currentState.copy();
     }
 
+    public getCurrentPlayerAsString(): string {
+      return Color[this.currentState.color];
+    }
+
     // There's an opportunity for optimization here: keep a count of pieces, and
     // decrement whenever there is a capture. In the meantime, we just iterate
     // through all 32 spots on the board.
@@ -223,11 +228,19 @@ export class GameBoard {
     // Obtain all potential moves by obtaining all move functions of the piece,
     // applying all of them, and returning the moves that aren't null.
     // Note that you can't just go by falsy values, because 0 is a valid index...
-    private potentialMoves(index: number): number[] {
+    public potentialMoves(index: number): number[] {
         let piece: Piece = this.pieces[index];
         return potentialMoveFunctions(piece)
             .map(f => f(index))
             .filter(arg => arg !== null) as number[];
+    }
+
+    public validMoves(index: number): number[] {
+      const piece: Piece = this.pieces[index];
+      const potentialMoves: number[] = this.potentialMoves(index);
+      const emptyTiles: number[] = potentialMoves.filter(move => this.pieces[move] === Piece.NONE);
+      // Add valid jumps
+      return emptyTiles;
     }
 
     // Given an index, return a list containing tuples.
@@ -486,7 +499,7 @@ function leftAdjacent(index: number): boolean {
 }
 
 function rightAdjacent(index: number): boolean {
-    return rightSide(index) || index % 8 == 7;
+    return rightSide(index) || index % 8 === 7;
 }
 
 // Obtaining possible diagonal moves.
@@ -602,24 +615,24 @@ function promotableLocation(color: Color, index: number): boolean {
 }
 
 export function fromObject(obj: utils.GameJSObject): GameBoard {
-    let gameStateObj: utils.GameStateJSObject = obj['gameState']
+    const gameStateObj: utils.GameStateJSObject = obj.gameState
     let gameState: GameState;
-    switch(gameStateObj['currentState']) {
+    switch(gameStateObj.currentState) {
         case 'RegularTurn':
-            gameState = new RegularTurn(gameStateObj['color']);
+            gameState = new RegularTurn(gameStateObj.color);
             break;
         case 'Multicapture':
-            let currentIndex: number | undefined = gameStateObj['currentIndex'];
+            const currentIndex: number | undefined = gameStateObj.currentIndex;
             if(currentIndex === undefined) {
-                throw 'fromObject: currentIndex is undefined!';
+                throw Error('fromObject: currentIndex is undefined!');
             }
-            gameState = new Multicapture(gameStateObj['color'], currentIndex);
+            gameState = new Multicapture(gameStateObj.color, currentIndex);
             break;
         case 'CompleteGame':
-            gameState = new CompleteGame(gameStateObj['color']);
+            gameState = new CompleteGame(gameStateObj.color);
             break;
         default:
-            throw 'fromObject: Invalid currentState object';
+            throw Error('fromObject: Invalid currentState object');
     }
-    return new GameBoard(obj['pieces'], gameState, true);
+    return new GameBoard(obj.pieces, gameState, true);
 }

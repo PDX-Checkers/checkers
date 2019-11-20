@@ -3,7 +3,9 @@ import Axios from 'axios'
 import './Login.css';
 import { WebsocketManager } from '../../websocketManager';
 
-class Login extends React.Component<{loggedInCallback: () => void},
+class Login extends React.Component<{
+  loggedInCallback: () => void,
+  loggedOutCallback: () => void},
 { username: string, password: string, loggedIn: boolean}> {
   constructor(props: any) {
     super(props);
@@ -44,7 +46,8 @@ class Login extends React.Component<{loggedInCallback: () => void},
       this.setState({loggedIn: false})
       if (WebsocketManager.isWsConnected()) {
         WebsocketManager.disconnect();
-      }
+      };
+      this.props.loggedOutCallback();
     })
   }
 
