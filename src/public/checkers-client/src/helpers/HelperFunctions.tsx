@@ -22,9 +22,5 @@ export function calculateCoordinatesFromShortIndex(index: number): any {
 }
 
 export function isLoggedIn(): boolean {
-  const loggedIn = sessionStorage.getItem('loggedIn');
-  if (loggedIn === 'true') {
-    return true;
-  }
-  return false;
+  return sessionStorage.getItem('loggedIn') === 'true' ? true : false;
 }

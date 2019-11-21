@@ -2,6 +2,7 @@ import React from 'react';
 import Axios from 'axios'
 import './Login.css';
 import { WebsocketManager } from '../../websocketManager';
+import { isLoggedIn } from '../../helpers/HelperFunctions';
 
 class Login extends React.Component<{
   loggedInCallback: () => void,
@@ -12,7 +13,7 @@ class Login extends React.Component<{
     this.state = {
       username: '',
       password: '',
-      loggedIn: sessionStorage.getItem('loggedIn') === 'true' ? true : false
+      loggedIn: isLoggedIn()
     }
   }
 
@@ -20,7 +21,7 @@ class Login extends React.Component<{
     Axios.post('/api/users', {
       username: this.state.username,
       password: this.state.password
-    });
+    })
   }
 
   private doLogin = () => {

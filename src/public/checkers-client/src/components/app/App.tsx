@@ -2,6 +2,7 @@ import React from 'react';
 import Login from '../login/Login';
 import GamesBrowser from '../gamesBrowser/GamesBrowser';
 import Board, { PlayerColor } from '../board/Board';
+import { isLoggedIn } from '../../helpers/HelperFunctions';
 
 class App extends React.Component<{},
   {loggedIn: boolean,
@@ -18,7 +19,7 @@ class App extends React.Component<{},
     this.gameCompleteCallback = this.gameCompleteCallback.bind(this);
 
     this.state = {
-      loggedIn: sessionStorage.getItem('loggedIn') === 'true' ? true : false,
+      loggedIn: isLoggedIn(),
       playerColor: PlayerColor.NOT_SET,
       boardState: undefined,
       gameInProgress: false
