@@ -70,16 +70,14 @@ class GamesBrowser extends React.Component<{
   }
 
   render() {
-    if (this.props.gameInProgress) {
+    if (this.props.gameInProgress || !this.props.loggedIn) {
       return <div></div>
     }
 
     let games;
-    if (this.props.loggedIn) {
-      WebsocketManager.setOnMessage(this.handleLobbyResponses);
-      if (this.state.games.length !== 0) {
-        games = this.getElementsFromGames();
-      }
+    WebsocketManager.setOnMessage(this.handleLobbyResponses);
+    if (this.state.games.length !== 0) {
+      games = this.getElementsFromGames();
     }
 
     return <div>

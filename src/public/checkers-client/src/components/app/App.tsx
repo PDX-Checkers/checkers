@@ -18,7 +18,7 @@ class App extends React.Component<{},
     this.gameCompleteCallback = this.gameCompleteCallback.bind(this);
 
     this.state = {
-      loggedIn: false,
+      loggedIn: sessionStorage.getItem('loggedIn') === 'true' ? true : false,
       playerColor: PlayerColor.NOT_SET,
       boardState: undefined,
       gameInProgress: false
