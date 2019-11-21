@@ -25,6 +25,7 @@ class Board extends React.Component<{
     this.handleGameResponses = this.handleGameResponses.bind(this);
     this.selectHandler = this.selectHandler.bind(this);
     this.doMove = this.doMove.bind(this);
+    this.returnToLobby = this.returnToLobby.bind(this);
 
     this.state = {
       boardState: undefined,
