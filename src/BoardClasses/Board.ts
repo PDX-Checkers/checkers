@@ -312,6 +312,12 @@ export class Board {
                            .indexOf(targetIndex) < 0) {
                 return null;
             }
+            // If the player is making a "capture" move, but can't actually capture
+            // that way, return null. 
+            if(Math.abs(sourceIndex - targetIndex) > 6 &&
+               this.findAllCaptures(sourceIndex).indexOf(targetIndex) < 0) {
+                return null;
+            }
             // Otherwise, it's a good move.
             let newBoard: Board = new Board(this.pieces, this.currentState, true);
             for(let i = 0; i < captureMoves.length; i++) {
