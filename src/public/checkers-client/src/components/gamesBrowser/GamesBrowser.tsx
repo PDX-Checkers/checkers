@@ -5,7 +5,8 @@ import { PlayerColor } from '../board/Board';
 
 class GamesBrowser extends React.Component<{
   gameStartedCallback: (boardState: any, playerColor: PlayerColor) => void,
-  loggedIn: boolean},
+  loggedIn: boolean,
+  gameInProgress: boolean},
   {inGame: boolean,
    games: any[]}> {
 
@@ -13,27 +14,37 @@ class GamesBrowser extends React.Component<{
     super(props);
 
     this.handleLobbyResponses = this.handleLobbyResponses.bind(this);
+    this.handleOnClose = this.handleOnClose.bind(this);
 
     this.state = {
-      inGame: false,
-      games: []
+      games: [],
+      inGame: false
     }
   }
 
   private handleLobbyResponses(event: any) {
     const response: any = JSON.parse(event.data);
     if (response.response_type === 'created_game') {
-      WebsocketManager.setOnMessage(this.handleLobbyResponses);
       this.setState({inGame: true});
     } else if (response.response_type === 'joined_game') {
       this.props.gameStartedCallback(
         response.board_state, this.state.inGame ? PlayerColor.BLACK : PlayerColor.RED);
-      this.setState({inGame: true});
+      this.setState({
+        games: [],
+        inGame: false
+      })
     } else if (response.response_type === 'active_games') {
       this.setState({
         games: response.games
       });
     }
+  }
+
+  private handleOnClose(event: any) {
+    this.setState({
+      games: [],
+      inGame: false
+    });
   }
 
   private createGame() {
@@ -66,25 +77,27 @@ class GamesBrowser extends React.Component<{
     WebsocketManager.sendMessage({request_type: 'get_games'});
   }
 
-  private registerWebsocketHandler() {
-    WebsocketManager.setOnMessage(this.handleLobbyResponses);
-  }
-
   render() {
-    let games;
-    if (this.props.loggedIn) {
-      this.registerWebsocketHandler();
-      if (this.state.games.length !== 0) {
-        games = this.getElementsFromGames();
-      }
+    if (this.props.gameInProgress || !this.props.loggedIn) {
+      return <div></div>
     }
 
-    return <div>
-      <button type='button' onClick={() => this.createGame()}
-      hidden={this.state.inGame}>Create Game</button>
-      <button type='button' onClick={() => this.getGames()}
-      hidden={this.state.inGame}>Get Games</button>
-      <br></br>
+    let games;
+    WebsocketManager.setOnMessage(this.handleLobbyResponses);
+    WebsocketManager.setOnClose(this.handleOnClose);
+    if (this.state.games.length !== 0) {
+      games = this.getElementsFromGames();
+    }
+
+    return <div className='container'>
+      <div className='row justify-content-center'>
+        <button type='button' onClick={() => this.createGame()}
+          className='btn btn-primary m-2'
+          hidden={this.state.inGame}>Create Game</button>
+        <button type='button' onClick={() => this.getGames()}
+          className='btn btn-secondary m-2'
+          hidden={this.state.inGame}>Get Games</button>
+      </div>
       {games}
     </div>
   }

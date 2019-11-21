@@ -7,10 +7,12 @@ class Game extends React.Component<{
   hidden: boolean}> {
 
   render() {
-    return <button hidden={this.props.hidden}
-    onClick={() => this.props.joinGameCallback(this.props.id)}>
-      Play against {this.props.name};
-    </button>
+    return <div className='row justify-content-center'>
+      <button hidden={this.props.hidden}
+      onClick={() => this.props.joinGameCallback(this.props.id)}>
+        Play against {this.props.name};
+      </button>
+    </div>
   }
 }
 

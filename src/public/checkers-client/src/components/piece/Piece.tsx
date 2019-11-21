@@ -14,14 +14,23 @@ import {calculateCoordinatesFromShortIndex} from '../../helpers/HelperFunctions'
 // Starting the game, Black occupies the top three rows. Red occupies the bottom
 // three rows.
 
-class Piece extends React.Component<{black: boolean, index: number, king: boolean}> {
+class Piece extends React.Component<
+  {black: boolean,
+   index: number,
+   king: boolean,
+   selected: boolean,
+   selectHandler: (index: number) => void,
+   you: boolean}> {
     render(): any {
     const color: string = this.props.black ? 'black-piece' : 'red-piece';
     const king: string = this.props.king ? 'king' : '';
-    const pieceClasses = `${color} ${king} piece`;
+    const selected: string = this.props.selected ? 'selected' : '';
+    const pieceClasses = `${color} ${king} ${selected} piece`;
     const coordinates = calculateCoordinatesFromShortIndex(this.props.index);
 
-    return <div className={pieceClasses} style={coordinates}></div>
+    return <div className={pieceClasses} style={coordinates}
+      onClick={this.props.you ? () => this.props.selectHandler(this.props.index)
+        : Function.prototype()}></div>
   }
 }
 
