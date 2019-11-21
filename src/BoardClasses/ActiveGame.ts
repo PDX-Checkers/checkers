@@ -110,7 +110,7 @@ export class ActiveGame {
             this.boardState = newBoard;
             this.sendBoth(new JSONValidMoveResponse(this.boardState));
 
-            if(this.boardState.isGameOver()) {
+            if(this.boardState.isCompleteGame()) {
                 this.finishGame();
             }
         }

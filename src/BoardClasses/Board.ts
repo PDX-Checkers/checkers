@@ -201,23 +201,42 @@ export class Board {
         return this.currentState.copy();
     }
 
-    // There's an opportunity for optimization here: keep a count of pieces, and
-    // decrement whenever there is a capture. In the meantime, we just iterate
-    // through all 32 spots on the board.
-    public isGameOver(): boolean {
-        let [numRed, numBlack] = [0, 0];
+    public noPieces(color: Color): boolean {
         for(let i = 0; i < this.pieces.length; i++) {
-            if(pieceColor(this.pieces[i]) == Color.RED) {
-                numRed++;
-            }
-            else if(pieceColor(this.pieces[i]) == Color.BLACK) {
-                numBlack++;
-            }
-            if(numRed > 0 && numBlack > 0) {
+            if(pieceColor(this.pieces[i]) === color) {
                 return false;
             }
         }
         return true;
+    }
+
+    public noLegalMoves(color: Color): boolean {
+        // If the player can capture, obviously we're good.
+        if(this.mustCapture()) {
+            return false;
+        }
+
+        for(let i: number = 0; i < this.pieces.length; i++) {
+            if(pieceColor(this.pieces[i]) === color) {
+                if(this.canMove(i)) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    public isGameOver(): boolean {
+        let color: Color = this.currentState.color;
+        return this.noPieces(color) || this.noLegalMoves(color);
+    }
+
+    public canMove(index: number): boolean {
+        let color: Color = pieceColor(this.pieces[index]);
+        return potentialNonCaptureMoveFunctions(this.pieces[index])
+            .map((f: ((arg: number) => number | null)) => f(index))
+            .filter(arg => arg !== null && this.pieces[arg] === Piece.NONE)
+            .length > 0;
     }
 
     // Obtain all potential moves by obtaining all move functions of the piece,
@@ -332,11 +351,6 @@ export class Board {
                         newBoard.currentState = new Multicapture(this.currentState.color, targetIndex);
                         return newBoard;
                     }
-                    // And since there was a capture, we check to see if it's game over.
-                    if(newBoard.isGameOver()) {
-                        newBoard.currentState = new CompleteGame(this.currentState.color)
-                        return newBoard;
-                    }
                 }
             }
             if(!moveMade) {
@@ -351,6 +365,10 @@ export class Board {
             }
             // And now we give the turn over to the other player.
             newBoard.currentState = new RegularTurn(otherColor(this.currentState.color));
+            if(newBoard.isGameOver()) {
+                newBoard.currentState = new CompleteGame(this.currentState.color)
+                return newBoard;
+            }
             return newBoard;
         }
         if(this.currentState.isMulticapture()) {
@@ -377,17 +395,16 @@ export class Board {
                 newBoard.currentState = new Multicapture(this.currentState.color, targetIndex);
                 return newBoard;
             }
-            // And since there was a capture, we check to see if it's game over.
-            if(newBoard.isGameOver()) {
-                newBoard.currentState = new CompleteGame(this.currentState.color)
-                return newBoard;
-            }
             // Otherwise, we check for promotion.
             if(promotableLocation(this.currentState.color, targetIndex)) {
                 newBoard.promote(targetIndex);
             }
             // And now we give the turn over to the other player.
             newBoard.currentState = new RegularTurn(otherColor(this.currentState.color));
+            if(newBoard.isGameOver()) {
+                newBoard.currentState = new CompleteGame(this.currentState.color)
+                return newBoard;
+            }
             return newBoard;
         }
 
@@ -431,6 +448,10 @@ export class Board {
 
     public finishEarly(color: Color): Board {
         return new Board(this.pieces, new CompleteGame(otherColor(color)), true);
+    }
+
+    public isCompleteGame(): boolean {
+        return this.currentState.isCompleteGame();
     }
 }
 
@@ -590,6 +611,32 @@ function potentialMoveFunctions(piece: Piece): ((arg: number) => number | null)[
         }
         case Piece.BLACK_KING: {
             return ALL_MOVES;
+        }
+    }
+}
+
+// Only regular moves, no captures.
+
+const ALL_NONCAPTURE_MOVES: ((arg: number) => number | null)[] = [
+    leftDown, rightDown, leftUp, rightUp
+];
+
+function potentialNonCaptureMoveFunctions(piece: Piece): ((arg: number) => number | null)[] {
+    switch(piece) {
+        case Piece.NONE: {
+            return [];
+        }
+        case Piece.RED_MAN: {
+            return [leftUp, rightUp];
+        }
+        case Piece.RED_KING: {
+            return ALL_NONCAPTURE_MOVES;
+        }
+        case Piece.BLACK_MAN: {
+            return [leftDown, rightDown];
+        }
+        case Piece.BLACK_KING: {
+            return ALL_NONCAPTURE_MOVES;
         }
     }
 }
