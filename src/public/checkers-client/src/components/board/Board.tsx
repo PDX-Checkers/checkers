@@ -16,7 +16,8 @@ class Board extends React.Component<{
   boardState: any,
   gameCompleteCallback: () => void},
   {boardState: any,
-   selectedPiece: number}> {
+   selectedPiece: number,
+   gameDone: boolean}> {
 
   constructor(props: any) {
     super(props);
@@ -27,7 +28,8 @@ class Board extends React.Component<{
 
     this.state = {
       boardState: undefined,
-      selectedPiece: -1
+      selectedPiece: -1,
+      gameDone: false
     }
   }
 
@@ -36,10 +38,10 @@ class Board extends React.Component<{
     if (response.response_type === 'valid_move') {
       if (response.board_state.gameState.currentState === 'CompleteGame') {
         this.setState({
-          boardState: undefined,
+          gameDone: true,
+          boardState: response.board_state,
           selectedPiece: -1
         });
-        this.props.gameCompleteCallback();
       }
       else {
         this.setState({
@@ -66,6 +68,15 @@ class Board extends React.Component<{
         target: targetAsShortIndex
       }
     })
+  }
+
+  private returnToLobby() {
+    this.setState({
+      boardState: undefined,
+      selectedPiece: -1,
+      gameDone: false
+    });
+    this.props.gameCompleteCallback();
   }
 
   render(): any {
@@ -116,13 +127,20 @@ class Board extends React.Component<{
       }
 
       const player: string = PlayerColor[this.props.playerColor];
-      const currentPlayer: string = gameBoard.getCurrentPlayerAsString();
+      const currentPlayer: string = this.state.gameDone ? '' : gameBoard.getCurrentPlayerAsString();
+      const currentPlayerMessage = this.state.gameDone ? <div></div> :
+       <span className='mt-2 mb-2'>It is {currentPlayer}'s turn</span>;
+      const playerOrWinnerMessage = this.state.gameDone ? `${player} is the winner!` : `You are ${player}`;
+      const backToLobbyButton = this.state.gameDone ?
+        <button className='btn btn-primary m-3' onClick={this.returnToLobby}>Go back to game menu</button> 
+        : <div></div>;
 
       boardHtml = <div className='text-center'>
       <div className='width-container'>
-        <span className='mt-2 mb-2'>You are {player}</span>
+        <span className='mt-2 mb-2'>{playerOrWinnerMessage}</span>
         <br></br>
-        <span className='mt-2 mb-2'>It is {currentPlayer}'s turn</span>
+        {currentPlayerMessage}
+        {backToLobbyButton}
         <div className='grid border border-dark '>
           {squares}
           {pieces}
