@@ -89,13 +89,15 @@ class GamesBrowser extends React.Component<{
       games = this.getElementsFromGames();
     }
 
-    return <div className='text-center'>
-      <button type='button' onClick={() => this.createGame()}
-        className='btn btn-primary m-2'
-        hidden={this.state.inGame}>Create Game</button>
-      <button type='button' onClick={() => this.getGames()}
-        className='btn btn-secondary m-2'
-        hidden={this.state.inGame}>Get Games</button>
+    return <div className='container'>
+      <div className='row justify-content-center'>
+        <button type='button' onClick={() => this.createGame()}
+          className='btn btn-primary m-2'
+          hidden={this.state.inGame}>Create Game</button>
+        <button type='button' onClick={() => this.getGames()}
+          className='btn btn-secondary m-2'
+          hidden={this.state.inGame}>Get Games</button>
+      </div>
       {games}
     </div>
   }

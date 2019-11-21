@@ -64,7 +64,7 @@ class Login extends React.Component<{
     return <div className='login'>
       <div className='container mt-5 w-25'>
         <form className='border' id='form'>
-          <h4 className='text-center mt-3'>CONTACT US</h4>
+          <h4 className='text-center mt-3'><strong>CHECKERS</strong></h4>
           <div className='row ml-4 mr-4'>
             <span>username</span>
           </div>
