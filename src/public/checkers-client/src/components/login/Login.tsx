@@ -88,11 +88,12 @@ class Login extends React.Component<{
             onChange={this.updatePassword}/>
           </div>
           <div className='mb-3 row ml-4 w-50'>
-            <button type='button' onClick={this.doRegister} 
+            <button type='button' onClick={this.doRegister} className='btn btn-secondary m-1'
             hidden={this.state.loggedIn}>Register</button>
-            <button type='button' onClick={this.doLogin} 
+            <button type='button' onClick={this.doLogin} className='btn btn-primary m-1'
             hidden={this.state.loggedIn}>Login</button>
-            <button type='button' onClick={this.doLogout}>Logout</button>
+            <button type='button' onClick={this.doLogout} className='btn btn-danger m-1'
+            hidden={!this.state.loggedIn}>Logout</button>
           </div>
         </form>
       </div>

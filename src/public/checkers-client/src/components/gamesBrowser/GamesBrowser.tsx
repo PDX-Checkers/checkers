@@ -14,6 +14,7 @@ class GamesBrowser extends React.Component<{
     super(props);
 
     this.handleLobbyResponses = this.handleLobbyResponses.bind(this);
+    this.handleOnClose = this.handleOnClose.bind(this);
 
     this.state = {
       games: [],
@@ -37,6 +38,13 @@ class GamesBrowser extends React.Component<{
         games: response.games
       });
     }
+  }
+
+  private handleOnClose(event: any) {
+    this.setState({
+      games: [],
+      inGame: false
+    });
   }
 
   private createGame() {
@@ -76,16 +84,18 @@ class GamesBrowser extends React.Component<{
 
     let games;
     WebsocketManager.setOnMessage(this.handleLobbyResponses);
+    WebsocketManager.setOnClose(this.handleOnClose);
     if (this.state.games.length !== 0) {
       games = this.getElementsFromGames();
     }
 
-    return <div>
+    return <div className='text-center'>
       <button type='button' onClick={() => this.createGame()}
-      hidden={this.state.inGame}>Create Game</button>
+        className='btn btn-primary m-2'
+        hidden={this.state.inGame}>Create Game</button>
       <button type='button' onClick={() => this.getGames()}
-      hidden={this.state.inGame}>Get Games</button>
-      <br></br>
+        className='btn btn-secondary m-2'
+        hidden={this.state.inGame}>Get Games</button>
       {games}
     </div>
   }

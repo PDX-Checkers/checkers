@@ -15,6 +15,10 @@ export class WebsocketManager {
     (WebsocketManager.ws as WebSocket).onmessage = callback;
   }
 
+  public static setOnClose(callback: (arg: any) => void) {
+    (WebsocketManager.ws as WebSocket).onclose = callback;
+  }
+
   public static isWsConnected(): boolean {
     if (WebsocketManager.ws !== undefined &&
       (WebsocketManager.ws as WebSocket).readyState === WebSocket.OPEN) {

@@ -50,16 +50,19 @@ class App extends React.Component<{},
 
   private loggedOutCallback() {
     this.setState({
-      loggedIn: false
+      loggedIn: false,
+      playerColor: PlayerColor.NOT_SET,
+      boardState: undefined,
+      gameInProgress: false
     })
   }
 
   render() {
   return <div>
-      <div id='login'>
+      <div id='login' className='m-2'>
         <Login loggedInCallback={this.loggedInCallback} loggedOutCallback={this.loggedOutCallback}/>
       </div>
-      <div id='games-container'>
+      <div id='games-container'className='m-2'>
         <GamesBrowser 
         gameStartedCallback={(boardState:any, playerColor: PlayerColor) =>
           this.gameStartedCallback(boardState, playerColor)}
