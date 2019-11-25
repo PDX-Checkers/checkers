@@ -2,7 +2,7 @@ import React from 'react';
 import { mount } from 'enzyme';
 import Game from './Game';
 
-const defaultGameProps: {id: string,
+const defaultProps: {id: string,
   name: string,
   joinGameCallback:
   (id: string) => void,
@@ -14,7 +14,7 @@ const defaultGameProps: {id: string,
 }
 
 function makeDefaultElement(): any {
-  return makeElement(defaultGameProps);
+  return makeElement(defaultProps);
 }
 
 // Why doesn't Typescript like me assigning a type of React.Component?
@@ -33,7 +33,7 @@ describe('Game element', () => {
   });
 
   it('is hidden if hidden is true', () => {
-    const props = defaultGameProps;
+    const props = defaultProps;
     props.hidden = true;
     const wrapper = mount(makeElement(props));
     expect(wrapper.prop('hidden')).toBe(true);
@@ -41,11 +41,11 @@ describe('Game element', () => {
 
   it('it prints out a message saying "Play against X" where x is the name', () => {
     const wrapper = mount(makeDefaultElement());
-    expect(wrapper.text()).toBe(`Play against ${defaultGameProps.name}`);
+    expect(wrapper.text()).toBe(`Play against ${defaultProps.name}`);
   })
 
   it('calls the join game callback if the user clicks the button', () => {
-    const props = defaultGameProps;
+    const props = defaultProps;
     props.joinGameCallback = jest.fn((id: string) => {});
     const wrapper = mount(makeElement(props));
     const button = wrapper.find('button');

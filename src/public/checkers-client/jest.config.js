@@ -10,5 +10,10 @@ module.exports = {
     "^.+\\.(ts|tsx)$": "ts-jest"
   },
   "snapshotSerializers": ["enzyme-to-json/serializer"],
-  "setupFilesAfterEnv": ["<rootDir>/enzyme.setup.ts"]
+  "setupFilesAfterEnv": [
+    "<rootDir>/enzyme.setup.ts",
+  ],
+  "moduleNameMapper": {
+    '^.+\\.(css)$': '<rootDir>/cssStub.ts'
+  }
 }

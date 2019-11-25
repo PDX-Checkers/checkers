@@ -1,8 +1,10 @@
 import React from 'react';
-import Axios from 'axios'
+import Axios from 'axios';
 import './Login.css';
 import { WebsocketManager } from '../../websocketManager';
 import isLoggedIn from '../../helpers/IsLoggedIn';
+var promiseFinally = require('promise.prototype.finally');
+promiseFinally.shim();
 
 class Login extends React.Component<{
   loggedInCallback: () => void,
@@ -15,16 +17,20 @@ class Login extends React.Component<{
       password: '',
       loggedIn: isLoggedIn()
     }
+
+    this.doLogin = this.doLogin.bind(this);
+    this.doLogout = this.doLogout.bind(this);
+    this.doRegister = this.doRegister.bind(this);
   }
 
-  private doRegister = () => {
+  private doRegister() {
     Axios.post('/api/users', {
       username: this.state.username,
       password: this.state.password
     })
   }
 
-  private doLogin = () => {
+  private doLogin() {
     Axios.post('/api/users/login', {
       username: this.state.username,
       password: this.state.password
@@ -37,19 +43,27 @@ class Login extends React.Component<{
     });
   }
 
-  private doLogout = () => {
+  private doLogout() {
     Axios.post('/api/users/logout', {
       username: this.state.username,
       password: this.state.password
     })
-    .finally(() => {
-      sessionStorage.setItem('loggedIn', 'false');
-      this.setState({loggedIn: false})
-      if (WebsocketManager.isWsConnected()) {
-        WebsocketManager.disconnect();
-      };
-      this.props.loggedOutCallback();
+    // This is not a finally because jest didn't understand the finally is a thing
+    .then(() => {
+      this._logout();
     })
+    .catch(() => {
+      this._logout();
+    })
+  }
+
+  private _logout() {
+    sessionStorage.setItem('loggedIn', 'false');
+    this.setState({loggedIn: false})
+    if (WebsocketManager.isWsConnected()) {
+      WebsocketManager.disconnect();
+    };
+    this.props.loggedOutCallback();
   }
 
   private updateUsername = (event: any) => {
@@ -88,11 +102,11 @@ class Login extends React.Component<{
             onChange={this.updatePassword}/>
           </div>
           <div className='mb-3 row ml-4 w-50'>
-            <button type='button' onClick={this.doRegister} className='btn btn-secondary m-1'
+            <button type='button' onClick={this.doRegister} className='btn btn-secondary m-1' id='register-button'
             hidden={this.state.loggedIn}>Register</button>
-            <button type='button' onClick={this.doLogin} className='btn btn-primary m-1'
+            <button type='button' onClick={this.doLogin} className='btn btn-primary m-1' id='login-button'
             hidden={this.state.loggedIn}>Login</button>
-            <button type='button' onClick={this.doLogout} className='btn btn-danger m-1'
+            <button type='button' onClick={this.doLogout} className='btn btn-danger m-1' id='logout-button'
             hidden={!this.state.loggedIn}>Logout</button>
           </div>
         </form>
