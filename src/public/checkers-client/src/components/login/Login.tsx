@@ -2,7 +2,7 @@ import React from 'react';
 import Axios from 'axios'
 import './Login.css';
 import { WebsocketManager } from '../../websocketManager';
-import { isLoggedIn } from '../../helpers/HelperFunctions';
+import isLoggedIn from '../../helpers/IsLoggedIn';
 
 class Login extends React.Component<{
   loggedInCallback: () => void,

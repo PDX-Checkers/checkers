@@ -1,6 +1,6 @@
 import React from 'react';
 import './Square.css'
-import {calculateCoordinatesFromFullIndex} from '../../helpers/HelperFunctions'
+import calculateCoordinatesFromFullIndex from '../../helpers/CalculateCoordinatesFromFullIndex';
 
 const blackSquare = 'black-square';
 const redSquare = 'red-square';

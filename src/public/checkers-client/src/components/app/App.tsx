@@ -2,7 +2,7 @@ import React from 'react';
 import Login from '../login/Login';
 import GamesBrowser from '../gamesBrowser/GamesBrowser';
 import Board, { PlayerColor } from '../board/Board';
-import { isLoggedIn } from '../../helpers/HelperFunctions';
+import isLoggedIn from '../../helpers/IsLoggedIn';
 
 class App extends React.Component<{},
   {loggedIn: boolean,

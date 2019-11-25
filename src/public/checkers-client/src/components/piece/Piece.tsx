@@ -1,6 +1,6 @@
 import React from 'react';
 import './Piece.css'
-import {calculateCoordinatesFromShortIndex} from '../../helpers/HelperFunctions'
+import calculateCoordinatesFromShortIndex from '../../helpers/CalculateCoordinatesFromShortIndex';
 
 // We number the board indices as follows:
 //     0   1   2   3
