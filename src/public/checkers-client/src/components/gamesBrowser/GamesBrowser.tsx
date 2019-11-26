@@ -4,9 +4,9 @@ import Game from '../game/Game';
 import { PlayerColor } from '../board/Board';
 
 class GamesBrowser extends React.Component<{
-  gameStartedCallback: (boardState: any, playerColor: PlayerColor) => void,
-  loggedIn: boolean,
-  gameInProgress: boolean},
+    gameStartedCallback: (boardState: any, playerColor: PlayerColor) => void,
+    loggedIn: boolean,
+    gameInProgress: boolean},
   {inGame: boolean,
    games: any[]}> {
 
@@ -92,10 +92,10 @@ class GamesBrowser extends React.Component<{
     return <div className='container'>
       <div className='row justify-content-center'>
         <button type='button' onClick={() => this.createGame()}
-          className='btn btn-primary m-2'
+          className='btn btn-primary m-2' id='create-game'
           hidden={this.state.inGame}>Create Game</button>
         <button type='button' onClick={() => this.getGames()}
-          className='btn btn-secondary m-2'
+          className='btn btn-secondary m-2' id='get-games'
           hidden={this.state.inGame}>Get Games</button>
       </div>
       {games}

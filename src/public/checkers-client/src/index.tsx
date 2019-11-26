@@ -2,9 +2,9 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import './index.css';
 import * as serviceWorker from './serviceWorker';
-import { isLoggedIn } from './helpers/HelperFunctions';
 import { WebsocketManager } from './websocketManager';
 import App from './components/app/App';
+import isLoggedIn from './helpers/IsLoggedIn';
 
 if (isLoggedIn()) {
   WebsocketManager.connect();
