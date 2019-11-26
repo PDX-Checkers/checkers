@@ -3,8 +3,6 @@ import Axios from 'axios';
 import './Login.css';
 import { WebsocketManager } from '../../websocketManager';
 import isLoggedIn from '../../helpers/IsLoggedIn';
-var promiseFinally = require('promise.prototype.finally');
-promiseFinally.shim();
 
 class Login extends React.Component<{
   loggedInCallback: () => void,
