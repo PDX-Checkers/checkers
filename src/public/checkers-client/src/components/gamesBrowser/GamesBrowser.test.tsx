@@ -45,7 +45,7 @@ describe('GamesBrowser element', () => {
     expect(gameInProgress.find('button').length).toBe(0);
   });
 
-  // Why doesn't his work? Revisit later
+  // Why doesn't this work? Revisit later
   // it('hides the buttons if state.inGame is true', () => {
   //   WebsocketManager.setOnMessage = jest.fn();
   //   WebsocketManager.setOnClose = jest.fn();

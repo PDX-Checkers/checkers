@@ -106,9 +106,7 @@ class Board extends React.Component<{
 
       const squares: any  = [];
       for (let i:number = 0; i< 64; i++) {
-        const potential = potentialMoves.includes(i);
-        const square = <Square key={i} index={i} potential={potential}
-          moveHandler={this.doMove}></Square>;
+        const square = <Square key={i} index={i} moveHandler={this.doMove}></Square>;
         squares.push(square);
       }
 
