@@ -2,10 +2,7 @@ import isLoggedIn from './IsLoggedIn';
 import calculateCoordinatesFromFullIndex from './CalculateCoordinatesFromFullIndex';
 import calculateCoordinatesFromShortIndex from './CalculateCoordinatesFromShortIndex';
 import * as FullCalc from './CalculateCoordinatesFromFullIndex';
-
-function randomNumber(maxPlusOne: number): number {
-  return Math.floor(Math.random() * maxPlusOne);
-}
+import { randomNumber } from './TestHelpers'
 
 const MAX_INDEX = 64;
 

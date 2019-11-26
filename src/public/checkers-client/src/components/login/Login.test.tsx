@@ -13,10 +13,6 @@ const defaultProps: {  loggedInCallback: () => void,
   loggedOutCallback: () => {}
 }
 
-function makeDefaultElement(): any {
-  return makeElement(defaultProps);
-}
-
 const waitForPromises = () => new Promise(setImmediate);
 
 class LocalStorage implements Storage {
