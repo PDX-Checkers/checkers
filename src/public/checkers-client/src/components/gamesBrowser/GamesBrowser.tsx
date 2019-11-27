@@ -32,7 +32,7 @@ class GamesBrowser extends React.Component<{
       this.setState({
         games: [],
         inGame: false
-      })
+      });
     } else if (response.response_type === 'active_games') {
       this.setState({
         games: response.games
