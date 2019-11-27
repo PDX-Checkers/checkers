@@ -1,5 +1,5 @@
 import React from 'react';
-import { mount, ReactWrapper } from 'enzyme';
+import { mount } from 'enzyme';
 import GamesBrowser from './GamesBrowser';
 import { PlayerColor } from '../board/Board'
 import { WebsocketManager } from '../../websocketManager'
@@ -25,14 +25,6 @@ function makeElement(props: any): any {
     />;
 }
 
-function createGame(wrapper: ReactWrapper): ReactWrapper {
-  return wrapper.find('#create-game');
-}
-
-function getGames(wrapper: ReactWrapper): ReactWrapper {
-  return wrapper.find('#get-games');
-}
-
 describe('GamesBrowser element', () => {
   it('is an empty div if a game is in progress or the user is not logged in', () => {
     const notLoggedIn = mount(makeDefaultElement());
@@ -46,20 +38,26 @@ describe('GamesBrowser element', () => {
   });
 
   // Why doesn't this work? Revisit later
-  // it('hides the buttons if state.inGame is true', () => {
-  //   WebsocketManager.setOnMessage = jest.fn();
-  //   WebsocketManager.setOnClose = jest.fn();
+  it('hides the buttons if state.inGame is true', () => {
+    WebsocketManager.setOnMessage = jest.fn();
+    WebsocketManager.setOnClose = jest.fn();
 
-  //   const props = defaultProps;
-  //   props.loggedIn = true;
-  //   const wrapper = mount(makeElement(props));
-  //   expect(getGames(wrapper).text()).toBe('Get Games');
-  //   expect(getGames(wrapper).prop('hidden')).toBe(false);
-  //   expect(createGame(wrapper).text()).toBe('Create Game');
-  //   expect(createGame(wrapper).prop('hidden')).toBe(false);
+    const props = defaultProps;
+    props.gameInProgress = false;
+    props.loggedIn = true;
 
-  //   wrapper.setState({inGame: true});
-  //   expect(getGames(wrapper).prop('hidden')).toBe(true);
-  //   expect(createGame(wrapper).prop('hidden')).toBe(true);
-  // });
+    const wrapper = mount(makeElement(props));
+    let getGamesButton = wrapper.find('#get-games');
+    let createGameButton = wrapper.find('#create-game');
+    expect(getGamesButton.text()).toBe('Get Games');
+    expect(getGamesButton.prop('hidden')).toBe(false);
+    expect(createGameButton.text()).toBe('Create Game');
+    expect(createGameButton.prop('hidden')).toBe(false);
+
+    wrapper.setState({inGame: true});
+    getGamesButton = wrapper.find('#get-games');
+    createGameButton = wrapper.find('#create-game');
+    expect(getGamesButton.prop('hidden')).toBe(true);
+    expect(createGameButton.prop('hidden')).toBe(true);
+  });
 });
