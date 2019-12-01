@@ -8,7 +8,8 @@ import { WebsocketManager } from '../../websocketManager'
 export enum PlayerColor {
   RED,
   BLACK,
-  NOT_SET
+  NOT_SET,
+  SPECTATOR
 }
 
 class Board extends React.Component<{

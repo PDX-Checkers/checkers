@@ -133,7 +133,7 @@ describe('GamesBrowser element', () => {
     event.data = '{"response_type": "joined_game", "board_state":"beans" }';
     (gamesBrowser.instance() as any).handleLobbyResponses(event);
     expect(gamesBrowser.state('inGame')).toBe(false);
-    expect(gamesBrowser.state('games')).toEqual([]);
+    expect(gamesBrowser.state('joinableGames')).toEqual([]);
     expect(props.gameStartedCallback).toHaveBeenCalledWith('beans', PlayerColor.RED);
 
     gamesBrowser.setState({
@@ -142,11 +142,11 @@ describe('GamesBrowser element', () => {
     });
     (gamesBrowser.instance() as any).handleLobbyResponses(event);
     expect(gamesBrowser.state('inGame')).toBe(false);
-    expect(gamesBrowser.state('games')).toEqual([]);
+    expect(gamesBrowser.state('joinableGames')).toEqual([]);
     expect(props.gameStartedCallback).toHaveBeenCalledWith('beans', PlayerColor.BLACK);
 
     event.data = '{"response_type": "active_games", "games":["waffles"] }';
     (gamesBrowser.instance() as any).handleLobbyResponses(event);
-    expect(gamesBrowser.state('games')).toEqual(['waffles']);
+    expect(gamesBrowser.state('joinableGames')).toEqual(['waffles']);
   });
 });
