@@ -119,7 +119,7 @@ export class ActiveGame {
         }
     }
 
-    public processSpectatorMessage(ws: OOPEventWebSocket, gameID: string, message: string) {
+    public processSpectatorMessage(ws: OOPEventWebSocket, userID: string, message: string) {
         let parsedObj: JSONRequest | null = parseMessageJSON(message);
         if(parsedObj === null) {
             sendResponse(ws, new JSONInvalidMessageResponse("Invalid object", this.boardState));
@@ -130,7 +130,8 @@ export class ActiveGame {
             return;
         }
         if(parsedObj.isLeaveGameRequest()) {
-            subscribe(this.parent, ws, gameID);
+            this.spectators.delete(userID);
+            subscribe(this.parent, ws, userID);
         }
         else {
             sendResponse(ws, new JSONInvalidMessageResponse("Valid request, but unauthorized"));
