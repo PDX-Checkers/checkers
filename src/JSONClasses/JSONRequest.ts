@@ -153,7 +153,7 @@ export function parseMessageJSON(json: string): JSONRequest | null {
     }
     if(parsedObj.request_type === "spectate_game") {
         if(typeof parsedObj.gameID === "string") {
-            return new JSONJoinGameRequest(parsedObj.gameID);
+            return new JSONSpectateGameRequest(parsedObj.gameID);
         }
         else {
             return null;
