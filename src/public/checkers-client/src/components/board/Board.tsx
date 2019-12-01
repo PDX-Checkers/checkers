@@ -136,7 +136,13 @@ class Board extends React.Component<{
       const currentPlayer: string = this.state.gameDone ? '' : gameBoard.getCurrentPlayerAsString();
       const currentPlayerMessage = this.state.gameDone ? <div></div> :
        <span className='mt-2 mb-2'>It is {currentPlayer}'s turn</span>;
-      const playerOrWinnerMessage = this.state.gameDone ? `${player} is the winner!` : `You are ${player}`;
+      let playerOrWinnerMessage;
+      if (this.state.gameDone) {
+        const winner = this.state.boardState.gameState.color === 1 ? 'RED' : 'BLACK';
+        playerOrWinnerMessage = `${winner} is the winner!`;
+      } else {
+        playerOrWinnerMessage = `You are ${player}`;
+      }
       const backToLobbyButton = this.state.gameDone && this.props.playerColor !== PlayerColor.SPECTATOR ?
         <button className='btn btn-primary m-3' onClick={this.returnToLobby}>Go back to game menu</button> 
         : <div></div>;

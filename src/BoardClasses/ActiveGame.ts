@@ -198,7 +198,7 @@ function wsListener(game: ActiveGame, ws: OOPEventWebSocket, color: Color): ((s:
 }
 
 function wsSpectatorListener(game: ActiveGame, ws: OOPEventWebSocket, gameID: string): ((s: string) => void) {
-    return function(s: string) { game.processSpectatorMessage(ws, s, gameID)};
+    return function(s: string) { game.processSpectatorMessage(ws, gameID, s)};
 }
 
 function isOpen(socket: OOPEventWebSocket) {
