@@ -20,6 +20,12 @@ export abstract class JSONRequest {
     isJoinGameRequest(): boolean {
         return false;
     }
+    isSpectateGameRequest(): boolean {
+        return false;
+    }
+    isLeaveGameRequest(): boolean {
+        return false;
+    }
     getMove(): [number, number] | null {
         return null;
     }
@@ -88,6 +94,30 @@ export class JSONJoinGameRequest extends JSONRequest {
     }
 }
 
+export class JSONSpectateGameRequest extends JSONRequest {
+    gameID: string;
+    constructor(gameID: string) {
+        super();
+        this.gameID = gameID;
+    }
+
+    isSpectateGameRequest(): boolean {
+        return true;
+    }
+
+    getGameID(): string | null {
+        return this.gameID;
+    }
+}
+
+export class JSONLeaveGameRequest extends JSONRequest {
+    constructor() {
+        super();
+    }
+    isLeaveGameRequest(): boolean {
+        return true;
+    }
+}
 
 export function parseMessageJSON(json: string): JSONRequest | null {
     let parsedObj: any = JSON.parse(json);
@@ -110,7 +140,18 @@ export function parseMessageJSON(json: string): JSONRequest | null {
     if(parsedObj.request_type === "create_game") {
         return new JSONCreateGameRequest();
     }
+    if(parsedObj.request_type === "leave_game") {
+        return new JSONLeaveGameRequest();
+    }
     if(parsedObj.request_type === "join_game") {
+        if(typeof parsedObj.gameID === "string") {
+            return new JSONJoinGameRequest(parsedObj.gameID);
+        }
+        else {
+            return null;
+        }
+    }
+    if(parsedObj.request_type === "spectate_game") {
         if(typeof parsedObj.gameID === "string") {
             return new JSONJoinGameRequest(parsedObj.gameID);
         }
