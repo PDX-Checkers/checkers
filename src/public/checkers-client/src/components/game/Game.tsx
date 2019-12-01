@@ -12,11 +12,13 @@ class Game extends React.Component<{
     let classes;
     if (this.props.joinable) {
       message = `Play against ${this.props.name}`
-      classes = 'btn btn-info'
+      classes = 'btn-info'
     } else {
       message = `Spectate ${this.props.name}'s game`
-      classes = 'btn btn-warning'
+      classes = 'btn-warning'
     }
+
+    classes += ' btn m-3'
 
     return <div className='row justify-content-center' test-id='game'>
       <button hidden={this.props.hidden} className={classes}
