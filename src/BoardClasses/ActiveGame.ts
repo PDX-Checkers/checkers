@@ -50,15 +50,15 @@ export class ActiveGame {
         this.redID = redID;
         this.redSocket = redSocket;
         this.subscribe(redSocket, Color.RED);
-        this.sendBoth(new JSONJoinedGame(this.boardState));
+        this.sendAll(new JSONJoinedGame(this.boardState));
     }
 
-    private sendBoth(message: JSONResponse) {
-        if(this.redSocket === undefined) {
-            throw "sendBoth: sending both when redSocket is undefined!";
-        }
+    private sendAll(message: JSONResponse) {
         sendResponse(this.blackSocket, message);
-        sendResponse(this.redSocket, message);
+        if(this.redSocket !== undefined) {
+            sendResponse(this.redSocket, message);
+        }
+        this.spectators.forEach((ws, _) => sendResponse(ws, message));
     }
 
     private getSocketColor(socket: OOPEventWebSocket): Color {
@@ -110,7 +110,7 @@ export class ActiveGame {
             }
 
             this.boardState = newBoard;
-            this.sendBoth(new JSONValidMoveResponse(this.boardState));
+            this.sendAll(new JSONValidMoveResponse(this.boardState));
 
             if(this.boardState.isCompleteGame()) {
                 this.finishGame();
