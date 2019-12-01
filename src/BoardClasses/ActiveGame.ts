@@ -9,7 +9,8 @@ import { JSONInvalidMessageResponse,
          JSONJoinedGame,
          JSONCreatedGame,
          sendResponse,
-         JSONVeryBadResponse} from '../JSONClasses/JSONResponse';
+         JSONVeryBadResponse,
+         JSONSpectatedGame} from '../JSONClasses/JSONResponse';
 import OOPEventWebSocket = require('ws');
 import { ActiveGameController, subscribe } from '../controllers/ActiveGameController';
 import { Logger } from '@overnightjs/logger';
@@ -150,6 +151,7 @@ export class ActiveGame {
         ws.removeAllListeners();
         ws.on("message", wsSpectatorListener(thisArg, ws, gameID));
         ws.on("close", leaveEarlySpectatorListener(thisArg, gameID));
+        sendResponse(ws, new JSONSpectatedGame(this.boardState));
     }
 
     // Once we finish the game, we need to return both websockets to the control of the ActiveGame.

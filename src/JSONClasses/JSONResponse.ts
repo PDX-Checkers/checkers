@@ -199,6 +199,20 @@ export class JSONJoinedGame extends JSONResponse {
     }
 }
 
+export class JSONSpectatedGame extends JSONResponse {
+    private board: Board;
+    constructor(board: Board) {
+        super();
+        this.board = board;
+    }
+    toObject(): object {
+        return {
+            response_type: "spectated_game",
+            board_state: this.board.toObject()
+        };
+    }
+}
+
 export class JSONCouldntFindGame extends JSONResponse {
     gameID: string;
     constructor(gameID: string) {
