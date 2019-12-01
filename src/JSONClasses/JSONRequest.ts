@@ -1,6 +1,7 @@
 import { ActiveGameController } from 'src/controllers/ActiveGameController';
 import { ActiveGame } from 'src/BoardClasses/ActiveGame';
 import { __spreadArrays } from 'tslib';
+import { Logger } from '@overnightjs/logger';
 
 export abstract class JSONRequest {
     constructor() {}
@@ -120,7 +121,14 @@ export class JSONLeaveGameRequest extends JSONRequest {
 }
 
 export function parseMessageJSON(json: string): JSONRequest | null {
-    let parsedObj: any = JSON.parse(json);
+    let parsedObj: any;
+    try {
+        parsedObj = JSON.parse(json);
+    }
+    catch(err) {
+        Logger.Info(`Unable to parse message ${json} as JSON!`)
+        return null;
+    }
     // All parsedObjs must have a request_type property.
     if(parsedObj?.request_type === undefined) {
         return null;
