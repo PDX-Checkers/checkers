@@ -33,12 +33,14 @@ class GamesBrowser extends React.Component<{
         response.board_state, this.state.inGame ? PlayerColor.BLACK : PlayerColor.RED);
       this.setState({
         joinableGames: [],
+        spectatableGames: [],
         inGame: false
       });
     } else if (response.response_type === 'spectated_game') {
       this.props.gameStartedCallback(response.board_state, PlayerColor.SPECTATOR);
       this.setState({
         joinableGames: [],
+        spectatableGames: [],
         inGame: false
       });
     } else if (response.response_type === 'active_games') {
@@ -52,6 +54,7 @@ class GamesBrowser extends React.Component<{
   private handleOnClose(event: any) {
     this.setState({
       joinableGames: [],
+      spectatableGames: [],
       inGame: false
     });
   }
