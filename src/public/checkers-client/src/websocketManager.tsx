@@ -4,7 +4,11 @@ export class WebsocketManager {
   private static ws: any;
 
   public static connect() {
-    (WebsocketManager.ws as WebSocket) = new WebSocket('ws://localhost:3000/api/ws');
+    const loc = window.location;
+    let newUri = 'ws:';
+    newUri += '//' + loc.host;
+    newUri += loc.pathname + 'api/ws';
+    (WebsocketManager.ws as WebSocket) = new WebSocket(newUri);
   }
 
   public static disconnect() {
