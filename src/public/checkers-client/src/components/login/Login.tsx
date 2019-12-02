@@ -93,7 +93,7 @@ class Login extends React.Component<{
           </div>
           <div className='row mb-3 ml-4 mr-4'>
             <input
-            type='text'
+            type='password'
             id='password'
             className='rounded w-100 border'
             value={this.state.password}
