@@ -1,6 +1,7 @@
 import { ActiveGameController } from 'src/controllers/ActiveGameController';
 import { ActiveGame } from 'src/BoardClasses/ActiveGame';
 import { __spreadArrays } from 'tslib';
+import { Logger } from '@overnightjs/logger';
 
 export abstract class JSONRequest {
     constructor() {}
@@ -18,6 +19,12 @@ export abstract class JSONRequest {
         return false;
     }
     isJoinGameRequest(): boolean {
+        return false;
+    }
+    isSpectateGameRequest(): boolean {
+        return false;
+    }
+    isLeaveGameRequest(): boolean {
         return false;
     }
     getMove(): [number, number] | null {
@@ -88,9 +95,40 @@ export class JSONJoinGameRequest extends JSONRequest {
     }
 }
 
+export class JSONSpectateGameRequest extends JSONRequest {
+    gameID: string;
+    constructor(gameID: string) {
+        super();
+        this.gameID = gameID;
+    }
+
+    isSpectateGameRequest(): boolean {
+        return true;
+    }
+
+    getGameID(): string | null {
+        return this.gameID;
+    }
+}
+
+export class JSONLeaveGameRequest extends JSONRequest {
+    constructor() {
+        super();
+    }
+    isLeaveGameRequest(): boolean {
+        return true;
+    }
+}
 
 export function parseMessageJSON(json: string): JSONRequest | null {
-    let parsedObj: any = JSON.parse(json);
+    let parsedObj: any;
+    try {
+        parsedObj = JSON.parse(json);
+    }
+    catch(err) {
+        Logger.Info(`Unable to parse message ${json} as JSON!`)
+        return null;
+    }
     // All parsedObjs must have a request_type property.
     if(parsedObj?.request_type === undefined) {
         return null;
@@ -110,9 +148,20 @@ export function parseMessageJSON(json: string): JSONRequest | null {
     if(parsedObj.request_type === "create_game") {
         return new JSONCreateGameRequest();
     }
+    if(parsedObj.request_type === "leave_game") {
+        return new JSONLeaveGameRequest();
+    }
     if(parsedObj.request_type === "join_game") {
         if(typeof parsedObj.gameID === "string") {
             return new JSONJoinGameRequest(parsedObj.gameID);
+        }
+        else {
+            return null;
+        }
+    }
+    if(parsedObj.request_type === "spectate_game") {
+        if(typeof parsedObj.gameID === "string") {
+            return new JSONSpectateGameRequest(parsedObj.gameID);
         }
         else {
             return null;

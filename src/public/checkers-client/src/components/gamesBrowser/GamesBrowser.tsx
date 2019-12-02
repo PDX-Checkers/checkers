@@ -8,7 +8,8 @@ class GamesBrowser extends React.Component<{
     loggedIn: boolean,
     gameInProgress: boolean},
   {inGame: boolean,
-   games: any[]}> {
+    joinableGames: any[],
+    spectatableGames: any[]}> {
 
   constructor(props: any) {
     super(props);
@@ -17,7 +18,8 @@ class GamesBrowser extends React.Component<{
     this.handleOnClose = this.handleOnClose.bind(this);
 
     this.state = {
-      games: [],
+      joinableGames: [],
+      spectatableGames: [],
       inGame: false
     }
   }
@@ -30,19 +32,26 @@ class GamesBrowser extends React.Component<{
       this.props.gameStartedCallback(
         response.board_state, this.state.inGame ? PlayerColor.BLACK : PlayerColor.RED);
       this.setState({
-        games: [],
+        joinableGames: [],
+        inGame: false
+      });
+    } else if (response.response_type === 'spectated_game') {
+      this.props.gameStartedCallback(response.board_state, PlayerColor.SPECTATOR);
+      this.setState({
+        joinableGames: [],
         inGame: false
       });
     } else if (response.response_type === 'active_games') {
       this.setState({
-        games: response.games
+        joinableGames: (response.games as any[]).filter(g => typeof g[1].redID === 'undefined'),
+        spectatableGames: response.games
       });
     }
   }
 
   private handleOnClose(event: any) {
     this.setState({
-      games: [],
+      joinableGames: [],
       inGame: false
     });
   }
@@ -63,15 +72,33 @@ class GamesBrowser extends React.Component<{
     }
   }
 
-  private getElementsFromGames(): any[] {
+  private spectateGame(id: string) {
+    if (WebsocketManager.isWsConnected()) {
+      WebsocketManager.sendMessage({request_type: 'spectate_game', gameID: id})
+    } else {
+      alert('Please login before you spectate a game');
+    }
+  }
+
+  private getElementsFromJoinableGames(): any[] {
     const elements: any[] = [];
-    this.state.games.forEach(game => {
+    this.state.joinableGames.forEach(game => {
       const button = <Game id={game[0]} name={game[1].blackID} key={game[0]}
-      joinGameCallback={this.joinGame} hidden={this.state.inGame}/>;
+      joinGameCallback={this.joinGame} hidden={this.state.inGame} joinable={true}/>;
       elements.push(button);
     });
     return elements;
   }
+
+  private getElementsFromSpectableGames(): any[] {
+    const elements: any[] = [];
+    this.state.spectatableGames.forEach(game => {
+      const button = <Game id={game[0]} name={game[1].blackID} key={game[0]}
+      joinGameCallback={this.spectateGame} hidden={this.state.inGame} joinable={false}/>;
+      elements.push(button);
+    });
+    return elements;
+  };
 
   private getGames() {
     WebsocketManager.sendMessage({request_type: 'get_games'});
@@ -82,11 +109,15 @@ class GamesBrowser extends React.Component<{
       return <div></div>
     }
 
-    let games;
+    let joinableGames;
+    let spectableGames;
     WebsocketManager.setOnMessage(this.handleLobbyResponses);
     WebsocketManager.setOnClose(this.handleOnClose);
-    if (this.state.games.length !== 0) {
-      games = this.getElementsFromGames();
+    if (this.state.joinableGames.length !== 0) {
+      joinableGames = this.getElementsFromJoinableGames();
+    }
+    if (this.state.spectatableGames.length !== 0) {
+      spectableGames = this.getElementsFromSpectableGames();
     }
 
     return <div className='container'>
@@ -98,7 +129,8 @@ class GamesBrowser extends React.Component<{
           className='btn btn-secondary m-2' id='get-games'
           hidden={this.state.inGame}>Get Games</button>
       </div>
-      {games}
+      {joinableGames}
+      {spectableGames}
     </div>
   }
 }

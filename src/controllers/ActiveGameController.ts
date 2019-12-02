@@ -58,6 +58,13 @@ export class ActiveGameController {
         }
     }
 
+    public spectateGame(gameID: string, playerID: string, ws: OOPEventWebSocket) {
+        let g: ActiveGame | undefined = this.games.get(gameID);
+        if(g !== undefined) {
+            g.subscribeSpectator(ws, gameID);
+        }
+    }
+
     public getGameIDs(): string[] {
         return Array.from(this.games.keys());
     }
@@ -87,6 +94,16 @@ export class ActiveGameController {
             }
             Logger.Info(`${username} is trying to join ${gameID}`);
             this.joinGame(gameID, username, ws);
+            return;
+        }
+        if(msgObj.isSpectateGameRequest()) {
+            let gameID: string | null = msgObj.getGameID();
+            if(gameID === null) {
+                Logger.Err("processMessage SpectateGameRequest: Something went extremely wrong, gameID is null");
+                return;
+            }
+            Logger.Info(`${username} is trying to spectate ${gameID}`);
+            this.spectateGame(gameID, username, ws);
             return;
         }
         Logger.Info(`${username} sent a valid request, but it's not for the ActiveGameController.`);

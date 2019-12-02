@@ -8,7 +8,8 @@ import { WebsocketManager } from '../../websocketManager'
 export enum PlayerColor {
   RED,
   BLACK,
-  NOT_SET
+  NOT_SET,
+  SPECTATOR
 }
 
 class Board extends React.Component<{
@@ -26,6 +27,7 @@ class Board extends React.Component<{
     this.selectHandler = this.selectHandler.bind(this);
     this.doMove = this.doMove.bind(this);
     this.returnToLobby = this.returnToLobby.bind(this);
+    this.leaveGame = this.leaveGame.bind(this);
 
     this.state = {
       boardState: undefined,
@@ -80,6 +82,11 @@ class Board extends React.Component<{
     this.props.gameCompleteCallback();
   }
 
+  private leaveGame() {
+    WebsocketManager.sendMessage({request_type : 'leave_game'});
+    this.returnToLobby();
+  }
+
   render(): any {
     let boardHtml: any;
     if (this.props.boardState === undefined && this.state.boardState === undefined) {
@@ -129,10 +136,20 @@ class Board extends React.Component<{
       const currentPlayer: string = this.state.gameDone ? '' : gameBoard.getCurrentPlayerAsString();
       const currentPlayerMessage = this.state.gameDone ? <div></div> :
        <span className='mt-2 mb-2'>It is {currentPlayer}'s turn</span>;
-      const playerOrWinnerMessage = this.state.gameDone ? `${player} is the winner!` : `You are ${player}`;
-      const backToLobbyButton = this.state.gameDone ?
+      let playerOrWinnerMessage;
+      if (this.state.gameDone) {
+        const winner = this.state.boardState.gameState.color === 1 ? 'RED' : 'BLACK';
+        playerOrWinnerMessage = `${winner} is the winner!`;
+      } else {
+        playerOrWinnerMessage = `You are ${player}`;
+      }
+      const backToLobbyButton = this.state.gameDone && this.props.playerColor !== PlayerColor.SPECTATOR ?
         <button className='btn btn-primary m-3' onClick={this.returnToLobby}>Go back to game menu</button> 
         : <div></div>;
+      const leaveButton = this.props.playerColor === PlayerColor.SPECTATOR ? 
+        <button className='btn btn-warning m-3' onClick={this.leaveGame}>
+          Stop spectating game
+        </button> : <div></div>;
 
       boardHtml = <div className='text-center'>
       <div className='width-container'>
@@ -140,6 +157,7 @@ class Board extends React.Component<{
         <br></br>
         {currentPlayerMessage}
         {backToLobbyButton}
+        {leaveButton}
         <div className='grid border border-dark '>
           {squares}
           {pieces}

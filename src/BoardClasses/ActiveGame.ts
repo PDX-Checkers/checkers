@@ -9,7 +9,8 @@ import { JSONInvalidMessageResponse,
          JSONJoinedGame,
          JSONCreatedGame,
          sendResponse,
-         JSONVeryBadResponse} from '../JSONClasses/JSONResponse';
+         JSONVeryBadResponse,
+         JSONSpectatedGame} from '../JSONClasses/JSONResponse';
 import OOPEventWebSocket = require('ws');
 import { ActiveGameController, subscribe } from '../controllers/ActiveGameController';
 import { Logger } from '@overnightjs/logger';
@@ -22,10 +23,12 @@ export class ActiveGame {
     boardState: Board;
     gameID: string;
     parent: ActiveGameController;
+    spectators: Map<string, OOPEventWebSocket>;
 
     // The Black player creates the game. The Red player joins the game.
     constructor(parent: ActiveGameController, gameID: string, blackID: string, blackSocket: OOPEventWebSocket, redID?: string, redSocket?: OOPEventWebSocket, board?: Board) {
         this.parent = parent;
+        this.spectators = new Map<string, OOPEventWebSocket>();
         this.gameID = gameID;
         this.blackID = blackID;
         this.redID = redID;
@@ -48,15 +51,15 @@ export class ActiveGame {
         this.redID = redID;
         this.redSocket = redSocket;
         this.subscribe(redSocket, Color.RED);
-        this.sendBoth(new JSONJoinedGame(this.boardState));
+        this.sendAll(new JSONJoinedGame(this.boardState));
     }
 
-    private sendBoth(message: JSONResponse) {
-        if(this.redSocket === undefined) {
-            throw "sendBoth: sending both when redSocket is undefined!";
-        }
+    private sendAll(message: JSONResponse) {
         sendResponse(this.blackSocket, message);
-        sendResponse(this.redSocket, message);
+        if(this.redSocket !== undefined) {
+            sendResponse(this.redSocket, message);
+        }
+        this.spectators.forEach((ws, _) => sendResponse(ws, message));
     }
 
     private getSocketColor(socket: OOPEventWebSocket): Color {
@@ -108,11 +111,31 @@ export class ActiveGame {
             }
 
             this.boardState = newBoard;
-            this.sendBoth(new JSONValidMoveResponse(this.boardState));
+            this.sendAll(new JSONValidMoveResponse(this.boardState));
 
             if(this.boardState.isCompleteGame()) {
                 this.finishGame();
             }
+        }
+    }
+
+    public processSpectatorMessage(ws: OOPEventWebSocket, userID: string, message: string) {
+        let parsedObj: JSONRequest | null = parseMessageJSON(message);
+        if(parsedObj === null) {
+            sendResponse(ws, new JSONInvalidMessageResponse("Invalid object", this.boardState));
+            return;
+        }
+        if(parsedObj.isStateRequest()) {
+            sendResponse(ws, new JSONGameStateResponse(this));
+            return;
+        }
+        if(parsedObj.isLeaveGameRequest()) {
+            this.spectators.delete(userID);
+            subscribe(this.parent, ws, userID);
+        }
+        else {
+            sendResponse(ws, new JSONInvalidMessageResponse("Valid request, but unauthorized"));
+            return;
         }
     }
 
@@ -121,6 +144,15 @@ export class ActiveGame {
         ws.removeAllListeners();
         ws.on("message", wsListener(thisArg, ws, color));
         ws.on("close", finishGameEarlyListener(thisArg, color));
+    }
+
+    subscribeSpectator(ws: OOPEventWebSocket, gameID: string) {
+        let thisArg: ActiveGame = this;
+        this.spectators.set(gameID, ws);
+        ws.removeAllListeners();
+        ws.on("message", wsSpectatorListener(thisArg, ws, gameID));
+        ws.on("close", leaveEarlySpectatorListener(thisArg, gameID));
+        sendResponse(ws, new JSONSpectatedGame(this.boardState));
     }
 
     // Once we finish the game, we need to return both websockets to the control of the ActiveGame.
@@ -135,6 +167,7 @@ export class ActiveGame {
         if(this.redSocket !== undefined && this.redID !== undefined && isOpen(this.redSocket)) {
             subscribe(this.parent, this.redSocket, this.redID);
         }
+        this.spectators.forEach((ws, gameID) => subscribe(this.parent, ws, gameID));
         this.parent.removeGame(this.gameID);
     }
 
@@ -151,8 +184,21 @@ function finishGameEarlyListener(game: ActiveGame, color: Color): (() => void) {
     }
 }
 
+function leaveEarlySpectatorListener(game: ActiveGame, gameID: string): (() => void) {
+    return function() {
+        let ws: OOPEventWebSocket | undefined = game.spectators.get(gameID);
+        if(ws !== undefined && isOpen(ws)) {
+            subscribe(game.parent, ws, gameID);
+        }
+    }
+}
+    
 function wsListener(game: ActiveGame, ws: OOPEventWebSocket, color: Color): ((s: string) => void) {
     return function(s: string) { game.processMessage(ws, color, s) };
+}
+
+function wsSpectatorListener(game: ActiveGame, ws: OOPEventWebSocket, gameID: string): ((s: string) => void) {
+    return function(s: string) { game.processSpectatorMessage(ws, gameID, s)};
 }
 
 function isOpen(socket: OOPEventWebSocket) {

@@ -6,11 +6,13 @@ const defaultProps: {id: string,
   name: string,
   joinGameCallback:
   (id: string) => void,
-  hidden: boolean } = {
+  hidden: boolean,
+  joinable: boolean } = {
   id: 'DefaultId',
   name: 'DefaultName',
   joinGameCallback: (id: string) => {},
-  hidden: false
+  hidden: false,
+  joinable: true
 }
 
 function makeDefaultElement(): any {
@@ -23,7 +25,8 @@ function makeElement(props: any): any {
   return <Game hidden={props.hidden}
     id={props.id}
     name={props.name}
-    joinGameCallback={props.joinGameCallback}></Game>;
+    joinGameCallback={props.joinGameCallback}
+    joinable={props.joinable}></Game>;
 }
 
 describe('Game element', () => {
@@ -39,10 +42,17 @@ describe('Game element', () => {
     expect(wrapper.prop('hidden')).toBe(true);
   });
 
-  it('it prints out a message saying "Play against X" where x is the name', () => {
+  it('prints out a message saying "Play against X" where x is the name', () => {
     const wrapper = mount(makeDefaultElement());
     expect(wrapper.text()).toBe(`Play against ${defaultProps.name}`);
-  })
+  });
+
+  it(`prints out a message saying "Spectate X's game" where x is the name`, () => {
+    const props = defaultProps;
+    defaultProps.joinable = false;
+    const wrapper = mount(makeElement(props));
+    expect(wrapper.text()).toBe(`Spectate ${props.name}'s game`);
+  });
 
   it('calls the join game callback if the user clicks the button', () => {
     const props = defaultProps;
