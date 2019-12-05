@@ -51,3 +51,7 @@ describing the architecture of the program.
 describing how the move notation works.
 * [API Reference](https://github.com/PDX-Checkers/checkers/wiki/API-Reference),
 describing how to interact with the WebSocket API.
+
+### Outside Libraries
+
+Look at both of our package.json files for a list of outside libraries we used.
